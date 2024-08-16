@@ -12,7 +12,8 @@ public class FSM<EnumState, EnumFlag>
     private Dictionary<int, Func<object[]>> behaviourTickParameters;
     private Dictionary<int, Func<object[]>> behaviourOnEnterParameters;
     private Dictionary<int, Func<object[]>> behaviourOnExitParameters;
-    private int[,] transitions;
+    private (int detinationState, Action onTransition)[,] transitions;
+
     ParallelOptions parallelOptions = new ParallelOptions() { MaxDegreeOfParallelism = 32 };
     private BehaviourActions GetCurrentStateOnEnterBehaviours => behaviour[currentState].GetOnEnterBehaviours(behaviourOnEnterParameters[currentState]?.Invoke());
     private BehaviourActions GetCurrentStateOnExitBehaviours => behaviour[currentState].GetOnExitBehaviours(behaviourOnExitParameters[currentState]?.Invoke());
@@ -24,13 +25,13 @@ public class FSM<EnumState, EnumFlag>
         int flags = Enum.GetValues(typeof(EnumFlag)).Length;
 
         behaviour = new Dictionary<int, State>();
-        transitions = new int[states, flags];
+        transitions = new (int, Action)[states, flags];
 
         for (int i = 0; i < states; i++)
         {
             for (int j = 0; j < flags; j++)
             {
-                transitions[i, j] = UNNASSIGNED_TRANSITION;
+                transitions[i, j] = (UNNASSIGNED_TRANSITION, null);
             }
         }
 
@@ -59,18 +60,20 @@ public class FSM<EnumState, EnumFlag>
         currentState = Convert.ToInt32(state);
     }
 
-    public void SetTransition(EnumState originState, EnumFlag flag, EnumState destinationState)
+    public void SetTransition(EnumState originState, EnumFlag flag, EnumState destinationState, Action onTransition = null)
     {
-        transitions[Convert.ToInt32(originState), Convert.ToInt32(flag)] = Convert.ToInt32(destinationState);
+        transitions[Convert.ToInt32(originState), Convert.ToInt32(flag)] = (Convert.ToInt32(destinationState), onTransition);
     }
 
     private void Transition(Enum flag)
     {
-        if (transitions[currentState, Convert.ToInt32(flag)] != UNNASSIGNED_TRANSITION)
+        if (transitions[currentState, Convert.ToInt32(flag)].detinationState != UNNASSIGNED_TRANSITION)
         {
             ExecuteBehaviour(GetCurrentStateOnExitBehaviours);
 
-            currentState = transitions[currentState, Convert.ToInt32(flag)];
+            transitions[currentState, Convert.ToInt32(flag)].onTransition?.Invoke();
+
+            currentState = transitions[currentState, Convert.ToInt32(flag)].detinationState;
 
             ExecuteBehaviour(GetCurrentStateOnEnterBehaviours);
         }

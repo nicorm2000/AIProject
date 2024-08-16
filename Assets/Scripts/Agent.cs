@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 public enum Behaviours
@@ -34,7 +33,7 @@ public class Agent : MonoBehaviour
             onTickParameters: () => { return new object[] { transform, wayPoint1, wayPoint2, target, speed, chaseDistance }; });
         fsm.AddBehaviour<ChaseState>(Behaviours.Explode);
 
-        fsm.SetTransition(Behaviours.Patrol, Flags.OnTargetNear, Behaviours.Chase);
+        fsm.SetTransition(Behaviours.Patrol, Flags.OnTargetNear, Behaviours.Chase, () => { Debug.Log("Te vi!"); });
         fsm.SetTransition(Behaviours.Chase, Flags.OnTargetReach, Behaviours.Explode);
         fsm.SetTransition(Behaviours.Chase, Flags.OnTargetLost, Behaviours.Patrol);
 
