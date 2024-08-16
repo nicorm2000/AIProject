@@ -29,9 +29,9 @@ public class Agent : MonoBehaviour
         //Add states and transitions
         fsm.AddBehaviour<ChaseState>(Behaviours.Chase,
             onTickParameters: () => { return new object[] { transform, target, speed, explodeDistance, lostDistance }; });
-        fsm.AddBehaviour<ChaseState>(Behaviours.Patrol,
+        fsm.AddBehaviour<PatrolState>(Behaviours.Patrol,
             onTickParameters: () => { return new object[] { transform, wayPoint1, wayPoint2, target, speed, chaseDistance }; });
-        fsm.AddBehaviour<ChaseState>(Behaviours.Explode);
+        fsm.AddBehaviour<ExplodeState>(Behaviours.Explode);
 
         fsm.SetTransition(Behaviours.Patrol, Flags.OnTargetNear, Behaviours.Chase, () => { Debug.Log("Te vi!"); });
         fsm.SetTransition(Behaviours.Chase, Flags.OnTargetReach, Behaviours.Explode);

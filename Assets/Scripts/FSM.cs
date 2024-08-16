@@ -94,29 +94,36 @@ public class FSM<EnumState, EnumFlag>
 
         int executionOrder = 0;
 
-        while (behaviourActions.MainThreadBehaviours.Count > 0 || behaviourActions.MultiThreadableBehaviours.Count > 0)
+        while ((behaviourActions.MainThreadBehaviours != null && behaviourActions.MainThreadBehaviours.Count > 0) || 
+            (behaviourActions.MultiThreadableBehaviours != null && behaviourActions.MultiThreadableBehaviours.Count > 0))
         {
             Task multiThreadableBehaviour = new Task(() =>
             {
-                if (behaviourActions.MultiThreadableBehaviours.ContainsKey(executionOrder))
+                if (behaviourActions.MultiThreadableBehaviours != null)
                 {
-                    Parallel.ForEach(behaviourActions.MultiThreadableBehaviours[executionOrder], parallelOptions, (behaviour) =>
+                    if (behaviourActions.MultiThreadableBehaviours.ContainsKey(executionOrder))
                     {
-                        behaviour?.Invoke();
-                    });
-                    behaviourActions.MultiThreadableBehaviours.TryRemove(executionOrder, out _);
+                        Parallel.ForEach(behaviourActions.MultiThreadableBehaviours[executionOrder], parallelOptions, (behaviour) =>
+                        {
+                            behaviour?.Invoke();
+                        });
+                        behaviourActions.MultiThreadableBehaviours.TryRemove(executionOrder, out _);
+                    }
                 }
             });
 
             multiThreadableBehaviour.Start();
 
-            if (behaviourActions.MainThreadBehaviours.ContainsKey(executionOrder))
+            if (behaviourActions.MainThreadBehaviours != null)
             {
-                foreach (Action behaviour in behaviourActions.MainThreadBehaviours[executionOrder])
+                if (behaviourActions.MainThreadBehaviours.ContainsKey(executionOrder))
                 {
-                    behaviour?.Invoke();
+                    foreach (Action behaviour in behaviourActions.MainThreadBehaviours[executionOrder])
+                    {
+                        behaviour?.Invoke();
+                    }
+                    behaviourActions.MainThreadBehaviours.Remove(executionOrder);
                 }
-                behaviourActions.MainThreadBehaviours.Remove(executionOrder);
             }
 
             multiThreadableBehaviour.Wait();

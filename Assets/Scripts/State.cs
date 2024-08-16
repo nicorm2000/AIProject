@@ -118,7 +118,7 @@ public sealed class PatrolState : State
         float chaseDistance = Convert.ToSingle(parameters[5]);
 
         BehaviourActions behaviours = new BehaviourActions();
-        behaviours.AddMultiThreadableBehaviours(0, () => 
+        behaviours.AddMainThreadBehaviours(0, () => 
         {
             if (actualTarget == null)
             {
