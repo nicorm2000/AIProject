@@ -1,5 +1,6 @@
 ﻿public interface INode
 {
+    public bool EqualsTo(INode node);
     public bool IsBlocked();
 }
 

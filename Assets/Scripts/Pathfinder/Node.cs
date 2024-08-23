@@ -16,4 +16,10 @@
     {
         return false;
     }
+
+    public bool EqualsTo(INode node)
+    {
+        //return coordinate.Equals(node as (Node<Coordinate>).coordinate); 
+        throw new System.NotImplementedException();
+    }
 }

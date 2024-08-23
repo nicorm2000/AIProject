@@ -14,10 +14,10 @@ public class DijkstraPathfinder<NodeType> : Pathfinder<NodeType> where NodeType 
 
     protected override bool IsBlocked(NodeType node)
     {
-        throw new System.NotImplementedException();
+        return node.IsBlocked();
     }
 
-    protected override int MoveToNeighbourCost(NodeType A, NodeType b)
+    protected override int MoveToNeighbourCost(NodeType A, NodeType B)
     {
         throw new System.NotImplementedException();
     }

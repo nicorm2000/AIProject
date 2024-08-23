@@ -89,7 +89,7 @@ public abstract class Pathfinder<NodeType> where NodeType : INode
 
     protected abstract bool NodesEquals(NodeType A, NodeType B);
 
-    protected abstract int MoveToNeighbourCost(NodeType A, NodeType b);
+    protected abstract int MoveToNeighbourCost(NodeType A, NodeType B);
 
     protected abstract bool IsBlocked(NodeType node);
 }
