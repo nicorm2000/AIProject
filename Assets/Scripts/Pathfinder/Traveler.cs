@@ -10,7 +10,7 @@ namespace Pathfinder
     {
         [FormerlySerializedAs("graphView")] public GraphView graphView;
 
-        private AStarPathfinder<Node<Vec2Int>> Pathfinder;
+        //private AStarPathfinder<Node<Vec2Int>> Pathfinder;
         //private DijkstraPathfinder<Node<Vector2Int>> Pathfinder;
         //private DepthFirstPathfinder<Node<Vector2Int>> Pathfinder;
         //private BreadthPathfinder<Node<Vec2Int>> Pathfinder;
