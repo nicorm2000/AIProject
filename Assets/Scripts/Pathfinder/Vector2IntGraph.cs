@@ -1,19 +1,22 @@
 ﻿using System.Collections.Generic;
+using Utils;
 
-public class Vector2IntGraph<NodeType> 
-    where NodeType : INode<UnityEngine.Vector2Int>, INode, new()
-{ 
-    public List<NodeType> nodes = new List<NodeType>();
-
-    public Vector2IntGraph(int x, int y) 
+namespace Pathfinder
+{
+    public class Vector2IntGraph<NodeType> where NodeType : INode<Vec2Int>, INode, new()
     {
-        for (int i = 0; i < x; i++)
+        public List<NodeType> nodes = new List<NodeType>();
+
+        public Vector2IntGraph(int x, int y)
         {
-            for (int j = 0; j < y; j++)
+            for (int i = 0; i < x; i++)
             {
-                NodeType node = new NodeType();
-                node.SetCoordinate(new UnityEngine.Vector2Int(i, j));
-                nodes.Add(node);
+                for (int j = 0; j < y; j++)
+                {
+                    NodeType node = new NodeType();
+                    node.SetCoordinate(new Vec2Int(i, j));
+                    nodes.Add(node);
+                }
             }
         }
     }
