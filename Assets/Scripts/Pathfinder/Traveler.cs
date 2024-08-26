@@ -10,7 +10,7 @@ namespace Pathfinder
     {
         [FormerlySerializedAs("graphView")] public GraphView graphView;
 
-        //private AStarPathfinder<Node<Vec2Int>> Pathfinder;
+        private AStarPathfinder<Node<Vec2Int>> Pathfinder;
         //private DijkstraPathfinder<Node<Vector2Int>> Pathfinder;
         //private DepthFirstPathfinder<Node<Vector2Int>> Pathfinder;
         //private BreadthPathfinder<Node<Vec2Int>> Pathfinder;
@@ -20,21 +20,21 @@ namespace Pathfinder
 
         void Start()
         {
-            //Pathfinder = new AStarPathfinder<Node<Vec2Int>>(graphView.Graph);
-            //startNode = new Node<Vec2Int>();
-            //startNode.SetCoordinate(new Vec2Int(Random.Range(0, 10), Random.Range(0, 10)));
-            //
-            //destinationNode = new Node<Vec2Int>();
-            //destinationNode.SetCoordinate(new Vec2Int(Random.Range(0, 10), Random.Range(0, 10)));
-            //
-            //List<Node<Vec2Int>> path = Pathfinder.FindPath(startNode, destinationNode);
-            //
-            //graphView.Transitions = Pathfinder.transitions;
-            //graphView.startNode = startNode;
-            //graphView.destinationNode = destinationNode;
-            //graphView.path = path;
-            //
-            //StartCoroutine(Move(path));
+            Pathfinder = new AStarPathfinder<Node<Vec2Int>>(graphView.Graph);
+            startNode = new Node<Vec2Int>();
+            startNode.SetCoordinate(new Vec2Int(Random.Range(0, 10), Random.Range(0, 10)));
+            
+            destinationNode = new Node<Vec2Int>();
+            destinationNode.SetCoordinate(new Vec2Int(Random.Range(0, 10), Random.Range(0, 10)));
+            
+            List<Node<Vec2Int>> path = Pathfinder.FindPath(startNode, destinationNode);
+            
+            graphView.Transitions = Pathfinder.transitions;
+            graphView.startNode = startNode;
+            graphView.destinationNode = destinationNode;
+            graphView.path = path;
+            
+            StartCoroutine(Move(path));
         }
 
         private IEnumerator Move(List<Node<Vec2Int>> path)
