@@ -1,29 +1,61 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using Utils;
 
-public class DepthFirstPathfinder<NodeType> : Pathfinder<NodeType> where NodeType : INode
+namespace Pathfinder
 {
-    protected override int Distance(NodeType A, NodeType B)
+    public class DepthFirstPathfinder<NodeType> : Pathfinder<NodeType> where NodeType : INode<Vec2Int>, INode, new()
     {
-        throw new System.NotImplementedException();
-    }
+        public DepthFirstPathfinder(Vector2IntGraph<NodeType> graph)
+        {
+            this.Graph = graph;
+        }
+        protected override int Distance(NodeType A, NodeType B)
+        {
+            int distance = 0;
 
-    protected override ICollection<NodeType> GetNeighbours(NodeType node)
-    {
-        throw new System.NotImplementedException();
-    }
+            var aCoor = (A).GetCoordinate();
+            var bCoor = (B).GetCoordinate();
 
-    protected override bool IsBlocked(NodeType node)
-    {
-        return node.IsBlocked();
-    }
+            distance += Math.Abs(aCoor.x - bCoor.x);
+            distance += Math.Abs(aCoor.y - bCoor.y);
 
-    protected override int MoveToNeighbourCost(NodeType A, NodeType B)
-    {
-        throw new System.NotImplementedException();
-    }
+            return distance;
+        }
 
-    protected override bool NodesEquals(NodeType A, NodeType B)
-    {
-        throw new System.NotImplementedException();
+        protected override ICollection<NodeType> GetNeighbors(NodeType node)
+        {
+            List<NodeType> neighbors = new List<NodeType>();
+
+            var nodeCoor = node.GetCoordinate();
+
+            for (int i = 0; i < Graph.nodes.Count; i++)
+            {
+                var neighborCoor = Graph.nodes[i].GetCoordinate();
+                if ((neighborCoor.x == nodeCoor.x && Math.Abs(neighborCoor.y - nodeCoor.y) == 1) ||
+                    (neighborCoor.y == nodeCoor.y && Math.Abs(neighborCoor.x - nodeCoor.x) == 1))
+                {
+                    neighbors.Add(Graph.nodes[i]);
+                }
+            }
+
+
+            return neighbors;
+        }
+
+        protected override bool IsBlocked(NodeType node)
+        {
+            return false;
+        }
+
+        protected override int MoveToNeighborCost(NodeType A, NodeType B)
+        {
+            return 0;
+        }
+
+        protected override bool NodesEquals(NodeType A, NodeType B)
+        {
+            return A.GetCoordinate().x == B.GetCoordinate().x && A.GetCoordinate().y == B.GetCoordinate().y;
+        }
     }
 }
