@@ -1,25 +1,27 @@
-﻿public class Node<Coordinate> : INode, INode<Coordinate>
+﻿namespace Pathfinder
 {
-    private Coordinate coordinate;
-
-    public void SetCoordinate(Coordinate coordinate)
+    public class Node<Coordinate> : INode, INode<Coordinate>
     {
-        this.coordinate = coordinate;
-    }
+        private Coordinate coordinate;
 
-    public Coordinate GetCoordinate()
-    {
-        return coordinate;
-    }
+        public void SetCoordinate(Coordinate coordinate)
+        {
+            this.coordinate = coordinate;
+        }
 
-    public bool IsBlocked()
-    {
-        return false;
-    }
+        public Coordinate GetCoordinate()
+        {
+            return coordinate;
+        }
 
-    public bool EqualsTo(INode node)
-    {
-        //return coordinate.Equals(node as (Node<Coordinate>).coordinate); 
-        throw new System.NotImplementedException();
+        public bool IsBlocked()
+        {
+            return false;
+        }
+
+        public bool EqualsTo(INode<Coordinate> other)
+        {
+            return coordinate.Equals(other.GetCoordinate());
+        }
     }
 }
