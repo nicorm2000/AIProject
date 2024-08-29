@@ -1,19 +1,28 @@
 using System.Collections.Generic;
 using System.Linq;
-using Utils;
 
 namespace Pathfinder
 {
-    public abstract class Pathfinder<NodeType> where NodeType : INode<Vec2Int>, INode, new()
+    public abstract class Pathfinder<NodeType> where NodeType : INode
     {
-        protected Vector2IntGraph<NodeType> Graph;
+        protected ICollection<NodeType> Graph;
+
+        public struct Transition<NodeType>
+        {
+            public NodeType to;
+            public int cost;
+            public int distance;
+        }
+
+        public Dictionary<NodeType, List<Transition<NodeType>>> transitions =
+            new Dictionary<NodeType, List<Transition<NodeType>>>();
 
         public List<NodeType> FindPath(NodeType startNode, NodeType destinationNode)
         {
             Dictionary<NodeType, (NodeType Parent, int AcumulativeCost, int Heuristic)> nodes =
                 new Dictionary<NodeType, (NodeType Parent, int AcumulativeCost, int Heuristic)>();
 
-            foreach (NodeType node in Graph.nodes)
+            foreach (NodeType node in Graph)
             {
                 nodes.Add(node, (default, 0, 0));
             }
@@ -67,7 +76,8 @@ namespace Pathfinder
                     aproxAcumulativeCost += nodes[currentNode].AcumulativeCost;
                     aproxAcumulativeCost += MoveToNeighborCost(currentNode, neighbor);
 
-                    if (openList.Contains(neighbor) && aproxAcumulativeCost >= nodes[currentNode].AcumulativeCost) continue;
+                    if (openList.Contains(neighbor) &&
+                        aproxAcumulativeCost >= nodes[currentNode].AcumulativeCost) continue;
 
                     nodes[neighbor] = (currentNode, aproxAcumulativeCost, Distance(neighbor, destinationNode));
 
@@ -88,21 +98,27 @@ namespace Pathfinder
                 while (!NodesEquals(currentNode, startNode))
                 {
                     path.Add(currentNode);
+
                     foreach (var node in nodes.Keys.ToList().Where(node => NodesEquals(currentNode, node)))
                     {
                         currentNode = nodes[node].Parent;
                         break;
                     }
                 }
+
                 path.Reverse();
                 return path;
             }
         }
 
         protected abstract ICollection<NodeType> GetNeighbors(NodeType node);
+
         protected abstract int Distance(NodeType A, NodeType B);
+
         protected abstract bool NodesEquals(NodeType A, NodeType B);
+
         protected abstract int MoveToNeighborCost(NodeType A, NodeType B);
+
         protected abstract bool IsBlocked(NodeType node);
     }
 }

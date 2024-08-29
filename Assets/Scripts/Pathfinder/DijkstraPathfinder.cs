@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Utils;
 
 namespace Pathfinder
 {
-    public class DijkstraPathfinder<NodeType> : Pathfinder<NodeType> where NodeType : INode<Vec2Int>, INode, new()
+    public class DijkstraPathfinder<NodeType> : Pathfinder<NodeType> where NodeType : INode, new()
+
     {
-        public DijkstraPathfinder(Vector2IntGraph<NodeType> graph)
+        public DijkstraPathfinder(ICollection<NodeType> graph)
         {
             this.Graph = graph;
         }
@@ -14,12 +16,11 @@ namespace Pathfinder
         protected override int Distance(NodeType A, NodeType B)
         {
             int distance = 0;
+            Node<Vec2Int> nodeA = A as Node<Vec2Int>;
+            Node<Vec2Int> nodeB = B as Node<Vec2Int>;
 
-            var aCoor = (A).GetCoordinate();
-            var bCoor = (B).GetCoordinate();
-
-            distance += Math.Abs(aCoor.x - bCoor.x);
-            distance += Math.Abs(aCoor.y - bCoor.y);
+            distance += Math.Abs(nodeA.GetCoordinate().x - nodeB.GetCoordinate().x);
+            distance += Math.Abs(nodeA.GetCoordinate().y - nodeB.GetCoordinate().y);
 
             return distance;
         }
@@ -28,17 +29,23 @@ namespace Pathfinder
         {
             List<NodeType> neighbors = new List<NodeType>();
 
-            var nodeCoor = node.GetCoordinate();
+            Node<Vec2Int> a = node as Node<Vec2Int>;
 
-            Graph.nodes.ForEach(neighbor =>
+            var nodeCoor = a.GetCoordinate();
+
+            Graph.ToList().ForEach(neighbor =>
             {
-                var neighborCoor = neighbor.GetCoordinate();
+                var neighborNode = neighbor as Node<Vec2Int>;
+
+                var neighborCoor = neighborNode.GetCoordinate();
+
                 if ((neighborCoor.x == nodeCoor.x && Math.Abs(neighborCoor.y - nodeCoor.y) == 1) ||
                     (neighborCoor.y == nodeCoor.y && Math.Abs(neighborCoor.x - nodeCoor.x) == 1))
                 {
                     neighbors.Add(neighbor);
                 }
             });
+
             return neighbors;
         }
 
@@ -54,7 +61,7 @@ namespace Pathfinder
 
         protected override bool NodesEquals(NodeType A, NodeType B)
         {
-            return A.GetCoordinate().x == B.GetCoordinate().x && A.GetCoordinate().y == B.GetCoordinate().y;
+            return Equals(A, B);
         }
     }
 }
