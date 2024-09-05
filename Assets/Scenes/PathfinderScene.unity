@@ -123,60 +123,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &11931769
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 11931771}
-  - component: {fileID: 11931770}
-  m_Layer: 0
-  m_Name: Voronoi
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &11931770
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 11931769}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8d3c14463e91b3d4ead1d5e130f85008, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  boundingBox:
-    serializedVersion: 2
-    x: -5
-    y: -5
-    width: 10
-    height: 10
-  numPoints: 10
-  maxWeight: 3
-  linePrefab: {fileID: 5827498923021140653, guid: a05841b0a6396494db0d6e8678bb204e, type: 3}
-  pointPrefab: {fileID: 5821695291633401723, guid: 6bf00ad0d21a60544be9b2209775b3c7, type: 3}
---- !u!4 &11931771
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 11931769}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 5, y: 5, z: 5}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &31547548
 GameObject:
   m_ObjectHideFlags: 0
@@ -263,7 +209,7 @@ Transform:
   m_GameObject: {fileID: 31547548}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -10}
+  m_LocalPosition: {x: 6.33, y: 4.58, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -280,7 +226,7 @@ GameObject:
   - component: {fileID: 815766765}
   - component: {fileID: 815766764}
   m_Layer: 0
-  m_Name: GraphView
+  m_Name: GrapfView
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -299,8 +245,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   showTransitions: 1
-  min: 10
-  max: 20
+  min: 0
+  max: 0
 --- !u!4 &815766765
 Transform:
   m_ObjectHideFlags: 0
@@ -430,7 +376,7 @@ Transform:
   m_GameObject: {fileID: 1022336793}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 3.6030037, y: 3.6361701, z: 0.04996268}
+  m_LocalPosition: {x: 3, y: 8, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -524,7 +470,7 @@ Transform:
   m_GameObject: {fileID: 1461397263}
   serializedVersion: 2
   m_LocalRotation: {x: 0.40821788, y: -0.23456968, z: 0.10938163, w: 0.8754261}
-  m_LocalPosition: {x: 0, y: 3, z: 0}
+  m_LocalPosition: {x: -9.51, y: 3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -538,4 +484,3 @@ SceneRoots:
   - {fileID: 1461397265}
   - {fileID: 815766765}
   - {fileID: 1022336798}
-  - {fileID: 11931771}
