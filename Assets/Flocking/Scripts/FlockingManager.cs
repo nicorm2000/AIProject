@@ -30,7 +30,7 @@ public class FlockingManager : MonoBehaviour
     public Vector3 Alignment(Boid boid)
     {
         List<Boid> insideRadiusBoids = GetBoidsInsideRadius(boid);
-        if (insideRadiusBoids.Count == 0) return boid.transform.up;
+        if (insideRadiusBoids.Count == 0) return boid.transform.forward;
 
         Vector3 avg = Vector3.zero;
         foreach (Boid b in insideRadiusBoids)
