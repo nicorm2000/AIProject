@@ -30,8 +30,8 @@ public class Boid : MonoBehaviour
     private void Update()
     {
         Vector3 desiredDirection = ACS();
-        transform.up = Vector3.Lerp(transform.up, desiredDirection, turnSpeed * Time.deltaTime);
-        transform.position += transform.up * speed * Time.deltaTime;
+        transform.forward = Vector3.Lerp(transform.forward, desiredDirection, turnSpeed * Time.deltaTime);
+        transform.position += transform.forward * speed * Time.deltaTime;
     }
 
     public Vector3 ACS()
