@@ -3,20 +3,11 @@ using Game;
 using Pathfinder;
 using StateMachine.States.RTSStates;
 using UnityEngine;
+using VoronoiDiagram;
 using Vector2 = Utils.Vec2Int;
 
 namespace StateMachine.Agents.RTS
 {
-    public class refInt
-    {
-        public refInt(int value)
-        {
-            this.value = value;
-        }
-
-        public int value;
-    }
-
     public class RTSAgent : MonoBehaviour
     {
         public enum Flags
@@ -42,15 +33,16 @@ namespace StateMachine.Agents.RTS
 
         public float speed = 1.0f;
         public bool retreat;
-        public refInt food = new refInt(3);
         public Node<Vector2> currentNode;
         public Node<Vector2> targetNode;
-
+        public Voronoi voronoi;
+        
+        protected int? Food = (3);
+        private int? _currentGold = 0;
+        private int? _lastTimeEat = 0;
         protected FSM<Behaviours, Flags> _fsm;
         protected AStarPathfinder<Node<Vector2>> _pathfinder;
         protected List<Node<Vector2>> _path;
-        private refInt _currentGold = new refInt(0);
-        private refInt _lastTimeEat = new refInt(0);
         private const int GoldPerFood = 3;
         private const int GoldLimit = 15;
         private const int FoodLimit = 10;
@@ -64,7 +56,7 @@ namespace StateMachine.Agents.RTS
         {
             _fsm = new FSM<Behaviours, Flags>();
 
-            targetNode = MapGenerator.nodes.Find(x => x.NodeType == NodeType.Mine && x.gold > 0);
+            targetNode = voronoi.GetMineCloser(transform.position);
             _pathfinder = new AStarPathfinder<Node<Vector2>>(MapGenerator.nodes, 0, 0);
             _path = _pathfinder.FindPath(currentNode, targetNode);
 
@@ -102,7 +94,7 @@ namespace StateMachine.Agents.RTS
 
         protected virtual object[] GatherTickParameters()
         {
-            object[] objects = { retreat, food, _currentGold, _lastTimeEat, GoldPerFood, GoldLimit, currentNode };
+            object[] objects = { retreat, Food, _currentGold, _lastTimeEat, GoldPerFood, GoldLimit, currentNode };
             return objects;
         }
 
@@ -119,7 +111,7 @@ namespace StateMachine.Agents.RTS
             _fsm.SetTransition(Behaviours.Walk, Flags.OnTargetLost, Behaviours.Walk,
                 () =>
                 {
-                    targetNode = MapGenerator.nodes.Find(x => x.NodeType == NodeType.Mine && x.gold > 0);
+                    targetNode = voronoi.GetMineCloser(transform.position);
                     Debug.Log("Walk to " + targetNode.GetCoordinate().x + " - " + targetNode.GetCoordinate().y);
                 });
 
@@ -143,14 +135,14 @@ namespace StateMachine.Agents.RTS
             _fsm.SetTransition(Behaviours.Wait, Flags.OnGather, Behaviours.Walk,
                 () =>
                 {
-                    targetNode = MapGenerator.nodes.Find(x => x.NodeType == NodeType.Mine && x.gold > 0);
+                    targetNode = voronoi.GetMineCloser(transform.position);
                     Debug.Log("walk to " + targetNode.GetCoordinate().x + " - " + targetNode.GetCoordinate().y);
                 });
         }
 
         protected virtual object[] WaitTickParameters()
         {
-            object[] objects = { retreat, food, _currentGold, currentNode };
+            object[] objects = { retreat, Food, _currentGold, currentNode };
             return objects;
         }
 
@@ -161,7 +153,7 @@ namespace StateMachine.Agents.RTS
 
         protected virtual object[] GetFoodEnterParameters()
         {
-            object[] objects = { food, FoodLimit };
+            object[] objects = { Food, FoodLimit };
             return objects;
         }
         

@@ -10,7 +10,7 @@ namespace StateMachine.States.RTSStates
 {
     public class WalkState : State
     {
-        private refInt i = new refInt(0);
+        private int? i = (0);
 
         public override BehaviourActions GetTickBehaviour(params object[] parameters)
         {
@@ -25,25 +25,34 @@ namespace StateMachine.States.RTSStates
             Pathfinder<Node<Vector2>> pathfinder = parameters[6] as Pathfinder<Node<Vector2>>;
 
 
-            behaviours.AddMainThreadBehaviours(0, () =>
+            behaviours.AddMultiThreadableBehaviours(0, () =>
+            {
+                if (currentNode == null || targetNode == null || pathfinder == null)
+                {
+                    return;
+                }
+
+                if (currentNode.Equals(targetNode)) return;
+
+                if ((path is null || i >= path.Count) && !currentNode.Equals(targetNode))
+                {
+                    path = pathfinder.FindPath(currentNode, targetNode);
+                }
+
+                if (path.Count <= 0 || i >= path.Count) return;
+
+                currentNode = path[(int)i];
+                i++;
+            });
+
+            behaviours.AddMainThreadBehaviours(1, () =>
             {
                 if (currentNode == null || targetNode == null || pathfinder == null)
                 {
                     Debug.LogError("One or more required parameters are null.");
                     return;
                 }
-
-                if (currentNode.Equals(targetNode)) return;
-
-                if ((path is null || i.value >= path.Count) && !currentNode.Equals(targetNode))
-                {
-                    path = pathfinder.FindPath(currentNode, targetNode);
-                }
-
-                if (path.Count <= 0 || i.value >= path.Count) return;
-
-                currentNode = path[i.value];
-                i.value++;
+                
                 position.position = new Vector3(currentNode.GetCoordinate().x, currentNode.GetCoordinate().y);
             });
 
@@ -52,7 +61,7 @@ namespace StateMachine.States.RTSStates
                 if (retreat && targetNode.NodeType != NodeType.TownCenter)
                 {
                     OnFlag?.Invoke(RTSAgent.Flags.OnRetreat);
-                    i.value = 0;
+                    i = 0;
                     return;
                 }
 
@@ -61,7 +70,7 @@ namespace StateMachine.States.RTSStates
                     targetNode.NodeType == NodeType.Mine && targetNode.gold <= 0)
                 {
                     OnFlag?.Invoke(RTSAgent.Flags.OnTargetLost);
-                    i.value = 0;
+                    i = 0;
                     return;
                 }
 
@@ -81,7 +90,7 @@ namespace StateMachine.States.RTSStates
                         throw new ArgumentOutOfRangeException();
                 }
 
-                i.value = 0;
+                i = 0;
             });
 
             return behaviours;
