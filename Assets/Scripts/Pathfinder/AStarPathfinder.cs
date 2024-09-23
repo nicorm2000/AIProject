@@ -2,15 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
-using UnityEngine;
 using Vector2 = Utils.Vec2Int;
 
 namespace Pathfinder
 {
-    public class AStarPathfinder<NodeType> : Pathfinder<NodeType> where NodeType : INode, new()
+    public class AStarPathfinder<NodeType, CoordinateType> : Pathfinder<NodeType, CoordinateType>
+        where NodeType : INode, INode<CoordinateType>, new()
+        where CoordinateType : IEquatable<CoordinateType>
     {
-        public static int CellSize;
-
         public AStarPathfinder(ICollection<NodeType> graph, int minCost = -1, int maxCost = 3)
         {
             this.Graph = graph;
@@ -49,32 +48,14 @@ namespace Pathfinder
             return (int)distance;
         }
 
-        protected override ICollection<NodeType> GetNeighbors(NodeType node)
+        protected override ICollection<INode<CoordinateType>> GetNeighbors(NodeType node)
         {
-            List<NodeType> neighbors = new List<NodeType>();
+            return node.GetNeighbors();
+        }
 
-            Node<Vector2> a = node as Node<Vector2>;
-
-            var nodeCoor = a.GetCoordinate();
-
-            Graph.ToList().ForEach(neighbor =>
-            {
-                var neighborNode = neighbor as Node<Vector2>;
-
-                var neighborCoor = neighborNode.GetCoordinate();
-
-                if ((Mathf.Approximately(neighborCoor.x, nodeCoor.x) &&
-                     Mathf.Approximately(Math.Abs(neighborCoor.y - nodeCoor.y), CellSize)) ||
-                    (Mathf.Approximately(neighborCoor.y, nodeCoor.y) &&
-                     Mathf.Approximately(Math.Abs(neighborCoor.x - nodeCoor.y), CellSize)) ||
-                    (Mathf.Approximately(Math.Abs(neighborCoor.y - nodeCoor.y), CellSize) &&
-                     Mathf.Approximately(Math.Abs(neighborCoor.x - nodeCoor.x), CellSize)))
-                {
-                    neighbors.Add(neighbor);
-                }
-            });
-
-            return neighbors;
+        public bool Approximately(float a, float b)
+        {
+            return Math.Abs(a - b) < 1e-6f;
         }
 
         protected override bool IsBlocked(NodeType node)
@@ -119,8 +100,8 @@ namespace Pathfinder
                 return false;
             }
 
-            return Mathf.Approximately(nodeA.GetCoordinate().x, nodeB.GetCoordinate().x) &&
-                   Mathf.Approximately(nodeA.GetCoordinate().y, nodeB.GetCoordinate().y);
+            return Approximately(nodeA.GetCoordinate().x, nodeB.GetCoordinate().x) &&
+                   Approximately(nodeA.GetCoordinate().y, nodeB.GetCoordinate().y);
         }
     }
 }

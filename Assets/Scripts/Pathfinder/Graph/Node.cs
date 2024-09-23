@@ -10,14 +10,17 @@ namespace Pathfinder
         Mine,
         TownCenter
     }
-    public class Node<Coordinate> : INode, INode<Coordinate> , IEquatable<INode<Coordinate>> where Coordinate : IEquatable<Coordinate>
+
+    public class Node<Coordinate> : INode, INode<Coordinate>, IEquatable<INode<Coordinate>>
+        where Coordinate : IEquatable<Coordinate>
     {
         public NodeType NodeType { get; set; }
         private Coordinate coordinate;
+        public ICollection<INode<Coordinate>> neighbors;
         public int food;
         public int gold;
         public int zone;
-    
+
         public void SetCoordinate(Coordinate coordinate)
         {
             this.coordinate = coordinate;
@@ -32,7 +35,17 @@ namespace Pathfinder
         {
             return false;
         }
-        
+
+        public void SetNeighbors(ICollection<INode<Coordinate>> neighbors)
+        {
+            this.neighbors = neighbors;
+        }
+
+        public ICollection<INode<Coordinate>> GetNeighbors()
+        {
+            return neighbors as ICollection<INode<Coordinate>>;
+        }
+
         public bool EqualsTo(INode<Coordinate> other)
         {
             return coordinate.Equals(other.GetCoordinate());
