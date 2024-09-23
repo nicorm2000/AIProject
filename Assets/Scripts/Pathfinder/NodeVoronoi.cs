@@ -103,7 +103,7 @@ namespace Pathfinder
         /// <param name="x">The new X-coordinate.</param>
         public void SetX(float x)
         {
-            coordinate.x = x; // Update the X-coordinate
+            coordinate.x = x;
         }
 
         /// <summary>
@@ -112,7 +112,7 @@ namespace Pathfinder
         /// <param name="y">The new Y-coordinate.</param>
         public void SetY(float y)
         {
-            coordinate.y = y; // Update the Y-coordinate
+            coordinate.y = y;
         }
 
         /// <summary>
@@ -121,7 +121,7 @@ namespace Pathfinder
         /// <returns>The coordinate as a Vector2.</returns>
         public Vector2 GetCoordinate()
         {
-            return coordinate; // Return the current coordinate
+            return coordinate;
         }
 
         /// <summary>
@@ -131,7 +131,7 @@ namespace Pathfinder
         /// <returns>The distance between the two coordinates.</returns>
         public float Distance(Vector2 b)
         {
-            return Vector2.Distance(coordinate, b); // Calculate distance to another point
+            return Vector2.Distance(coordinate, b);
         }
 
         /// <summary>
@@ -140,7 +140,7 @@ namespace Pathfinder
         /// <returns>The magnitude of the vector.</returns>
         public float GetMagnitude()
         {
-            return coordinate.magnitude; // Return the magnitude of the coordinate
+            return coordinate.magnitude;
         }
 
         /// <summary>
@@ -150,7 +150,7 @@ namespace Pathfinder
         /// <param name="y">The new Y-coordinate.</param>
         public void SetCoordinate(float x, float y)
         {
-            this.coordinate = new Vector2(x, y); // Set coordinate using X and Y
+            this.coordinate = new Vector2(x, y);
         }
 
         /// <summary>
@@ -159,7 +159,7 @@ namespace Pathfinder
         /// <param name="coordinate">The new coordinate.</param>
         public void SetCoordinate(Vector2 coordinate)
         {
-            this.coordinate = coordinate; // Set coordinate using a Vector2
+            this.coordinate = coordinate;
         }
 
         /// <summary>
@@ -167,7 +167,7 @@ namespace Pathfinder
         /// </summary>
         public void Zero()
         {
-            coordinate = Vector2.zero; // Reset coordinate to zero
+            coordinate = Vector2.zero;
         }
 
         /// <summary>
@@ -175,7 +175,7 @@ namespace Pathfinder
         /// </summary>
         public void Perpendicular()
         {
-            coordinate = new Vector2(-coordinate.y, coordinate.x); // Calculate the perpendicular vector
+            coordinate = new Vector2(-coordinate.y, coordinate.x);
         }
 
         /// <summary>
@@ -185,7 +185,7 @@ namespace Pathfinder
         /// <returns>True if equal, otherwise false.</returns>
         public bool Equals(Vector2 other)
         {
-            return coordinate.Equals(other); // Compare with another Vector2
+            return coordinate.Equals(other);
         }
 
         /// <summary>
@@ -195,7 +195,7 @@ namespace Pathfinder
         /// <returns>True if equal, otherwise false.</returns>
         public bool Equals(NodeVoronoi other)
         {
-            return coordinate.Equals(other.coordinate); // Compare with another NodeVoronoi
+            return coordinate.Equals(other.coordinate);
         }
     }
 }

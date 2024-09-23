@@ -130,7 +130,6 @@ namespace MathDebbuger
                     }
                     ClearSceneDictionary();
                 }
-
             }
 
             public class CameraDebugger : MonoBehaviour
