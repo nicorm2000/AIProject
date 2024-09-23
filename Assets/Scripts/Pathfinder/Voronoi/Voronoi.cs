@@ -1,16 +1,16 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Game;
-using Pathfinder;
 
-namespace VoronoiDiagram
+namespace Pathfinder.Voronoi
 {
-    public class Voronoi<TCoordinate, CoordinateType>
-        where TCoordinate : IEquatable<TCoordinate>, ICoordinate<CoordinateType>, new()
-        where CoordinateType : IEquatable<CoordinateType>
+    public class Voronoi<TCoordinate, TCoordinateType>
+        where TCoordinate : IEquatable<TCoordinate>, ICoordinate<TCoordinateType>, new()
+        where TCoordinateType : IEquatable<TCoordinateType>
     {
-        private List<Limit<TCoordinate, CoordinateType>> limits = new List<Limit<TCoordinate,CoordinateType>>();
-        private List<Sector<TCoordinate,CoordinateType>> sectors = new List<Sector<TCoordinate,CoordinateType>>();
+        private readonly List<Limit<TCoordinate, TCoordinateType>> limits = new();
+        private readonly List<Sector<TCoordinate,TCoordinateType>> sectors = new();
 
         public void Init()
         {
@@ -21,28 +21,31 @@ namespace VoronoiDiagram
         {
             // Calculo los limites del mapa con sus dimensiones, distancia entre nodos y punto de origen
             TCoordinate mapSize = new TCoordinate();
-            mapSize.SetCoordinate(MapGenerator<TCoordinate, CoordinateType>.MapDimensions.GetCoordinate());
-            mapSize.Multiply(MapGenerator<TCoordinate, CoordinateType>.CellSize);
+            mapSize.SetCoordinate(MapGenerator<TCoordinate, TCoordinateType>.MapDimensions.GetCoordinate());
+            mapSize.Multiply(MapGenerator<TCoordinate, TCoordinateType>.CellSize);
             TCoordinate offset = new TCoordinate();
-            offset.SetCoordinate(MapGenerator<TCoordinate, CoordinateType>.OriginPosition.GetCoordinate());
+            offset.SetCoordinate(MapGenerator<TCoordinate, TCoordinateType>.OriginPosition.GetCoordinate());
 
-            TCoordinate coordinate = new TCoordinate();
             
-            coordinate.SetCoordinate(0, mapSize.GetY());
-            coordinate.Add(offset.GetCoordinate());
-            limits.Add(new Limit<TCoordinate, CoordinateType>(coordinate, DIRECTION.UP));
+            TCoordinate coordinateUp = new TCoordinate();
+            coordinateUp.SetCoordinate(0, mapSize.GetY());
+            coordinateUp.Add(offset.GetCoordinate());
+            limits.Add(new Limit<TCoordinate, TCoordinateType>(coordinateUp, Direction.Up));
             
-            coordinate.SetCoordinate(mapSize.GetX(), 0f);
-            coordinate.Add(offset.GetCoordinate());
-            limits.Add(new Limit<TCoordinate, CoordinateType>(coordinate, DIRECTION.DOWN));
+            TCoordinate coordinateDown = new TCoordinate();
+            coordinateDown.SetCoordinate(mapSize.GetX(), 0f);
+            coordinateDown.Add(offset.GetCoordinate());
+            limits.Add(new Limit<TCoordinate, TCoordinateType>(coordinateDown, Direction.Down));
             
-            coordinate.SetCoordinate(mapSize.GetX(), mapSize.GetY());
-            coordinate.Add(offset.GetCoordinate());
-            limits.Add(new Limit<TCoordinate, CoordinateType>(coordinate, DIRECTION.RIGHT));
+            TCoordinate coordinateRight = new TCoordinate();
+            coordinateRight.SetCoordinate(mapSize.GetX(), mapSize.GetY());
+            coordinateRight.Add(offset.GetCoordinate());
+            limits.Add(new Limit<TCoordinate, TCoordinateType>(coordinateRight, Direction.Right));
             
-            coordinate.SetCoordinate(0, 0);
-            coordinate.Add(offset.GetCoordinate());
-            limits.Add(new Limit<TCoordinate, CoordinateType>(coordinate, DIRECTION.LEFT));
+            TCoordinate coordinateLeft = new TCoordinate();
+            coordinateLeft.SetCoordinate(0, 0);
+            coordinateLeft.Add(offset.GetCoordinate());
+            limits.Add(new Limit<TCoordinate, TCoordinateType>(coordinateLeft, Direction.Left));
         }
 
         public void SetVoronoi(List<TCoordinate> goldMines)
@@ -50,18 +53,18 @@ namespace VoronoiDiagram
             sectors.Clear();
             if (goldMines.Count <= 0) return;
 
-            for (int i = 0; i < goldMines.Count; i++)
+            foreach (var mine in goldMines)
             {
                 // Agrego las minas de oro como sectores
-                Node<CoordinateType> node = new Node<CoordinateType>();
-                node.SetCoordinate(goldMines[i].GetCoordinate());
-                sectors.Add(new Sector<TCoordinate, CoordinateType>(node));
+                Node<TCoordinateType> node = new Node<TCoordinateType>();
+                node.SetCoordinate(mine.GetCoordinate());
+                sectors.Add(new Sector<TCoordinate, TCoordinateType>(node));
             }
 
-            for (int i = 0; i < sectors.Count; i++)
+            foreach (var sector in sectors)
             {
                 // Agrego los limites a cada sector
-                sectors[i].AddSegmentLimits(limits);
+                sector.AddSegmentLimits(limits);
             }
 
             for (int i = 0; i < goldMines.Count; i++)
@@ -74,38 +77,23 @@ namespace VoronoiDiagram
                 }
             }
 
-            for (int i = 0; i < sectors.Count; i++)
+            foreach (var sector in sectors)
             {
                 // Calculo las intersecciones
-                sectors[i].SetIntersections();
+                sector.SetIntersections();
             }
         }
 
-        public Node<CoordinateType> GetMineCloser(TCoordinate agentPosition)
+        public Node<TCoordinateType> GetMineCloser(TCoordinate agentPosition)
         {
             // Calculo que mina esta mas cerca a x position
-            if (sectors != null)
-            {
-                for (int i = 0; i < sectors.Count; i++)
-                {
-                    if (sectors[i].CheckPointInSector(agentPosition))
-                    {
-                        return sectors[i].Mine;
-                    }
-                }
-            }
-
-            return null;
+            return sectors != null ? (from sector in sectors 
+                where sector.CheckPointInSector(agentPosition) select sector.Mine).FirstOrDefault() : null;
         }
 
-        public void Draw()
+        public List<Sector<TCoordinate,TCoordinateType>> SectorsToDraw()
         {
-            if (sectors.Count <= 0) return;
-
-            for (int i = 0; i < sectors.Count; i++)
-            {
-                sectors[i].Draw();
-            }
+            return sectors;
         }
     }
 }

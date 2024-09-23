@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using Game;
 using Pathfinder;
+using Pathfinder.Voronoi;
 using StateMachine.States.RTSStates;
 using UnityEngine;
-using VoronoiDiagram;
 
 namespace StateMachine.Agents.RTS
 {

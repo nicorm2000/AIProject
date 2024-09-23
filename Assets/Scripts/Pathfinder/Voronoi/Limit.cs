@@ -1,24 +1,23 @@
 using System;
-using Pathfinder;
 
-namespace VoronoiDiagram
+namespace Pathfinder.Voronoi
 {
-    public enum DIRECTION
+    public enum Direction
     {
-        UP,
-        RIGHT,
-        DOWN,
-        LEFT
+        Up,
+        Right,
+        Down,
+        Left
     }
 
-    public class Limit<TCoordinate, CoordinateType> 
-        where TCoordinate : ICoordinate<CoordinateType>, new()
-        where CoordinateType : IEquatable<CoordinateType>
+    public class Limit<TCoordinate, TCoordinateType> 
+        where TCoordinate : ICoordinate<TCoordinateType>, new()
+        where TCoordinateType : IEquatable<TCoordinateType>
     {
         private TCoordinate origin;
-        private DIRECTION direction;
+        private readonly Direction direction;
 
-        public Limit(TCoordinate origin, DIRECTION direction)
+        public Limit(TCoordinate origin, Direction direction)
         {
             this.origin = origin;
             this.direction = direction;
@@ -31,26 +30,27 @@ namespace VoronoiDiagram
             // 2. Tomo el valor absoluto para asegurarme de tener una distancia positiva
             // 3. Multiplico esta distancia por 2 para extender el límite más allá de la distancia original
             TCoordinate distance = new TCoordinate();
-            distance.SetCoordinate(Math.Abs(position.GetX() - origin.GetX()) * 2f,
-                Math.Abs(position.GetY() - origin.GetY()) * 2f);
+            distance.SetCoordinate(Math.Abs(position.GetX() - origin.GetX()) * 2f, Math.Abs(position.GetY() - origin.GetY()) * 2f);
+            TCoordinate limit = new TCoordinate();
+            limit.SetCoordinate(position.GetCoordinate());
 
             switch (direction)
             {
-                case DIRECTION.LEFT:
-                    position.SetX(position.GetX() - distance.GetX());
+                case Direction.Left:
+                    limit.SetX(position.GetX() - distance.GetX());
                     break;
-                case DIRECTION.UP:
-                    position.SetY(position.GetY() + distance.GetY());
+                case Direction.Up:
+                    limit.SetY(position.GetY() + distance.GetY());
                     break;
-                case DIRECTION.RIGHT:
-                    position.SetX(position.GetX() + distance.GetX());
+                case Direction.Right:
+                    limit.SetX(position.GetX() + distance.GetX());
                     break;
-                case DIRECTION.DOWN:
-                    position.SetY(position.GetY() - distance.GetY());
+                case Direction.Down:
+                    limit.SetY(position.GetY() - distance.GetY());
                     break;
             }
 
-            return position;
+            return limit;
         }
     }
 }
