@@ -67,7 +67,7 @@ namespace Game
             {
                 voronoiNodes.Add(graph.CoordNodes.Find((node => node.GetCoordinate() == MapGenerator<NodeVoronoi, Vector2>.mines[i].GetCoordinate())));
             }
-            
+  
             GameObject miner = Instantiate(minerPrefab, townCenterPosition, Quaternion.identity);
             Miner agent = miner.GetComponent<Miner>();
             agent.currentNode = graph.NodesType[towncenterNode];
