@@ -31,8 +31,8 @@ namespace Pathfinder.Graph
         public static List<Node<TCoordinateType>> mines = new List<Node<TCoordinateType>>();
 
         public static TCoordinateNode MapDimensions;
-        public static float CellSize;
         public static TCoordinateNode OriginPosition;
+        public static float CellSize;
 
         /// <summary>
         /// Constructor for initializing the graph and its neighbor relationships.
