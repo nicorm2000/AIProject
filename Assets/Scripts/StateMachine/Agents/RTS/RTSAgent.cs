@@ -30,6 +30,12 @@ namespace StateMachine.Agents.RTS
             Deliver
         }
 
+        public enum AgentTypes
+        {
+            Miner,
+            Caravan
+        }
+
         public static Node<Vector2> TownCenter;
         public static bool Retreat;
         public Node<Vector2> CurrentNode;
@@ -38,14 +44,14 @@ namespace StateMachine.Agents.RTS
         protected FSM<Behaviours, Flags> Fsm;
         protected AStarPathfinder<Node<Vector2>, Vector2, NodeVoronoi> Pathfinder;
         protected List<Node<Vector2>> Path;
-
+        protected AgentTypes AgentType;
         protected Node<Vector2> TargetNode
         {
             get => targetNode;
             set
             {
                 targetNode = value;
-                Path = Pathfinder.FindPath(CurrentNode, TargetNode);
+                Path = Pathfinder.FindPath(CurrentNode, TargetNode, AgentType);
                 PathNodeId = 0;
             }
         }
@@ -71,8 +77,7 @@ namespace StateMachine.Agents.RTS
         {
             Fsm = new FSM<Behaviours, Flags>();
 
-            Pathfinder = new AStarPathfinder<Node<Vector2>, Vector2, NodeVoronoi>(
-                Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType, 0, 0);
+            Pathfinder = GameManager.Pathfinder;
 
             OnMove += Move;
             OnWait += Wait;
@@ -104,6 +109,8 @@ namespace StateMachine.Agents.RTS
                 {
                     TargetNode = GetTarget(NodeType.TownCenter);
 
+                    if (TargetNode == null) return;
+
                     Debug.Log("Retreat to " + TargetNode.GetCoordinate().x + " - " + TargetNode.GetCoordinate().y);
                 });
         }
@@ -123,6 +130,8 @@ namespace StateMachine.Agents.RTS
                 {
                     TargetNode = GetTarget(NodeType.TownCenter);
 
+                    if (TargetNode == null) return;
+
                     Debug.Log("Retreat. Walk to " + TargetNode.GetCoordinate().x + " - " +
                               TargetNode.GetCoordinate().y);
                 });
@@ -131,6 +140,8 @@ namespace StateMachine.Agents.RTS
                 () =>
                 {
                     TargetNode = GetTarget(NodeType.Mine);
+
+                    if (TargetNode == null) return;
 
                     Debug.Log("Walk to " + TargetNode.GetCoordinate().x + " - " + TargetNode.GetCoordinate().y);
                 });
@@ -146,7 +157,7 @@ namespace StateMachine.Agents.RTS
 
         protected virtual object[] WalkEnterParameters()
         {
-            object[] objects = { CurrentNode, TargetNode, Path, Pathfinder };
+            object[] objects = { CurrentNode, TargetNode, Path, Pathfinder, AgentType };
             return objects;
         }
 
@@ -157,6 +168,8 @@ namespace StateMachine.Agents.RTS
                 {
                     TargetNode = GetTarget(NodeType.Mine);
 
+                    if (TargetNode == null) return;
+
                     Debug.Log("walk to " + TargetNode.GetCoordinate().x + " - " + TargetNode.GetCoordinate().y);
                 });
             Fsm.SetTransition(Behaviours.Wait, Units.Flags.OnTargetLost, Behaviours.Walk,
@@ -164,12 +177,17 @@ namespace StateMachine.Agents.RTS
                 {
                     TargetNode = GetTarget(NodeType.Mine); ;
 
+                    if (TargetNode == null) return;
+
                     Debug.Log("walk to " + TargetNode.GetCoordinate().x + " - " + TargetNode.GetCoordinate().y);
                 });
             Fsm.SetTransition(Behaviours.Wait, Flags.OnRetreat, Behaviours.Walk,
                 () =>
                 {
                     TargetNode = GetTarget(NodeType.TownCenter);
+
+                    if (TargetNode == null) return;
+
                     Debug.Log("Retreat. Walk to " + TargetNode.GetCoordinate().x + " - " + TargetNode.GetCoordinate().y);
                 });
         }

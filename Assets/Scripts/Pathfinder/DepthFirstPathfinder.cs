@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using StateMachine.Agents.RTS;
 using UnityEngine;
 
 namespace Pathfinder
@@ -69,7 +70,7 @@ namespace Pathfinder
         /// <param name="A">The current node.</param>
         /// <param name="B">The neighboring node.</param>
         /// <returns>The cost of moving to the neighbor node.</returns>
-        protected override int MoveToNeighborCost(NodeType A, NodeType B)
+        protected override int MoveToNeighborCost(NodeType A, NodeType B, RTSAgent.AgentTypes type)
         {
             return 0;
         }

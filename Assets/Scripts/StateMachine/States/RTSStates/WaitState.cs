@@ -18,18 +18,38 @@ namespace StateMachine.States.RTSStates
             Node<Vector2> currentNode = (Node<Vector2>)parameters[3];
             Action OnWait = parameters[4] as Action;
 
-            behaviours.AddMultiThreadableBehaviours(0, () =>
-            {
-                OnWait?.Invoke();
-            });
+
+            behaviours.AddMultiThreadableBehaviours(0, () => { OnWait?.Invoke(); });
 
             behaviours.SetTransitionBehaviour(() =>
             {
-                if (retreat && currentNode.NodeType != NodeType.TownCenter) OnFlag?.Invoke(RTSAgent.Flags.OnRetreat);
-                if (retreat) return;
-                if (food > 0 && currentNode.NodeType == NodeType.Mine) OnFlag?.Invoke(RTSAgent.Flags.OnGather);
-                if (currentNode.NodeType == NodeType.Mine && currentNode.gold <= 0) OnFlag?.Invoke(RTSAgent.Flags.OnTargetLost);
-                if (gold <= 0 && currentNode.NodeType == NodeType.TownCenter) OnFlag?.Invoke(RTSAgent.Flags.OnGather);
+                if (retreat)
+                {
+                    if (currentNode.NodeType != NodeType.TownCenter)
+                    {
+                        OnFlag?.Invoke(RTSAgent.Flags.OnRetreat);
+                    }
+                    return;
+                }
+
+                if (currentNode.NodeType == NodeType.Empty ||
+                    (currentNode.NodeType == NodeType.Mine && currentNode.gold <= 0))
+                {
+                    OnFlag?.Invoke(RTSAgent.Flags.OnTargetLost);
+                    return;
+                }
+
+                if (food > 0 && currentNode.NodeType == NodeType.Mine)
+                {
+                    OnFlag?.Invoke(RTSAgent.Flags.OnGather);
+                    return;
+                }
+
+                if (gold <= 0 && currentNode.NodeType == NodeType.TownCenter)
+                {
+                    OnFlag?.Invoke(RTSAgent.Flags.OnGather);
+                    return;
+                }
             });
 
             return behaviours;

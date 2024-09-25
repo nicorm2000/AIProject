@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using StateMachine.Agents.RTS;
 
 namespace Pathfinder
 {
@@ -31,18 +32,13 @@ namespace Pathfinder
         protected ICollection<TNodeType> Graph;
 
         /// <summary>
-        /// A dictionary that holds the transitions for each node, mapping it to a list of possible transitions.
-        /// </summary>
-        public Dictionary<TNodeType, List<Transition<TNodeType>>> transitions =
-            new Dictionary<TNodeType, List<Transition<TNodeType>>>();
-
-        /// <summary>
         /// Finds the optimal path from a starting node to a destination node using the pathfinding algorithm.
         /// </summary>
         /// <param name="startNode">The starting node.</param>
         /// <param name="destinationNode">The goal node.</param>
+        /// <param name="agentType">The agent type.</param>
         /// <returns>A list of nodes representing the path, or null if no path is found.</returns>
-        public List<TNodeType> FindPath(TNodeType startNode, TNodeType destinationNode)
+        public List<TNodeType> FindPath(TNodeType startNode, TNodeType destinationNode, RTSAgent.AgentTypes agentType)
         {
             Dictionary<TNodeType, (TNodeType Parent, int AcumulativeCost, int Heuristic)> nodes =
     new Dictionary<TNodeType, (TNodeType Parent, int AcumulativeCost, int Heuristic)>();
@@ -94,7 +90,7 @@ namespace Pathfinder
                     int aproxAcumulativeCost = 0;
 
                     aproxAcumulativeCost += nodes[currentNode].AcumulativeCost;
-                    aproxAcumulativeCost += MoveToNeighborCost(currentNode, neighbor);  // Add movement cost to the neighbor
+                    aproxAcumulativeCost += MoveToNeighborCost(currentNode, neighbor, agentType);  // Add movement cost to the neighbor
 
                     // Skip if the neighbor is already in the open list and the cost is not lower
                     if (openList.Contains(neighbor) && aproxAcumulativeCost >= nodes[neighbor].AcumulativeCost)
@@ -172,8 +168,9 @@ namespace Pathfinder
         /// </summary>
         /// <param name="A">Node A.</param>
         /// <param name="B">Neighboring node B.</param>
+        /// <param name="type">The agent type.</param>
         /// <returns>The movement cost from A to B.</returns>
-        protected abstract int MoveToNeighborCost(TNodeType A, TNodeType B);
+        protected abstract int MoveToNeighborCost(TNodeType A, TNodeType B, RTSAgent.AgentTypes type);
 
         /// <summary>
         /// Abstract method to determine if a node is blocked or inaccessible.

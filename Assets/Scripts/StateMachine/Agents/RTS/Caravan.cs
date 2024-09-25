@@ -15,6 +15,7 @@ namespace StateMachine.Agents.RTS
         public override void Init()
         {
             base.Init();
+            AgentType = AgentTypes.Caravan;
             Fsm.ForceTransition(Behaviours.GatherResources);
             onGather += Gather;
             onDeliver += DeliverFood;
@@ -53,7 +54,7 @@ namespace StateMachine.Agents.RTS
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnFull, Behaviours.Walk,
                 () =>
                 {
-                    if (GameManager.MinesWithMiners == null || GameManager.MinesWithMiners[0] == null)
+                    if (GameManager.MinesWithMiners == null || GameManager.MinesWithMiners.Count <= 0)
                     {
                         Debug.LogError("No mines with miners.");
                         return;
@@ -61,7 +62,11 @@ namespace StateMachine.Agents.RTS
 
                     Node<Vector2> target = GameManager.MinesWithMiners[0];
 
+                    if (target == null) return;
+
                     TargetNode = Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType.Find(node => node.GetCoordinate() == target.GetCoordinate());
+
+                    if (TargetNode == null) return;
 
                     Debug.Log("Get Food.");
                 });
@@ -69,6 +74,8 @@ namespace StateMachine.Agents.RTS
                 () =>
                 {
                     TargetNode = GetTarget(NodeType.TownCenter);
+
+                    if (TargetNode == null) return;
 
                     Debug.Log("Retreat. Walk to " + TargetNode.GetCoordinate().x + " - " +
                               TargetNode.GetCoordinate().y);
@@ -82,6 +89,7 @@ namespace StateMachine.Agents.RTS
                 {
                     TargetNode = GetTarget(NodeType.TownCenter);
 
+                    if (TargetNode == null) return;
 
                     Debug.Log("Retreat. Walk to " + TargetNode.GetCoordinate().x + " - " +
                               TargetNode.GetCoordinate().y);
@@ -90,7 +98,7 @@ namespace StateMachine.Agents.RTS
             Fsm.SetTransition(Behaviours.Walk, Flags.OnTargetLost, Behaviours.Walk,
                 () =>
                 {
-                    if (GameManager.MinesWithMiners == null || GameManager.MinesWithMiners[0] == null)
+                    if (GameManager.MinesWithMiners == null || GameManager.MinesWithMiners.Count <= 0)
                     {
                         Debug.LogError("No mines with miners.");
                         return;
@@ -98,7 +106,11 @@ namespace StateMachine.Agents.RTS
 
                     Node<Vector2> target = GameManager.MinesWithMiners[0];
 
+                    if (target == null) return;
+
                     TargetNode = Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType.Find(node => node.GetCoordinate() == target.GetCoordinate());
+
+                    if (TargetNode == null) return;
 
                     Debug.Log("Walk to " + TargetNode.GetCoordinate().x + " - " + TargetNode.GetCoordinate().y);
                 });
@@ -126,12 +138,16 @@ namespace StateMachine.Agents.RTS
                 {
                     TargetNode = TownCenter;
 
+                    if (TargetNode == null) return;
+
                     Debug.Log("To town center");
                 });
             Fsm.SetTransition(Behaviours.Deliver, Flags.OnRetreat, Behaviours.Walk,
                 () =>
                 {
                     TargetNode = TownCenter;
+
+                    if (TargetNode == null) return;
 
                     Debug.Log("Retreat. Walk to " + TargetNode.GetCoordinate().x + " - " +
                               TargetNode.GetCoordinate().y);

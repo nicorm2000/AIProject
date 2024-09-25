@@ -36,6 +36,7 @@ namespace Game
 
         public static Graph<Node<Vector2>, NodeVoronoi, Vector2> Graph;
         public static List<Node<Vector2>> MinesWithMiners = new List<Node<Vector2>>();
+        public static AStarPathfinder<Node<Vector2>, Vector2, NodeVoronoi> Pathfinder;
 
         private Voronoi<NodeVoronoi, Vector2> voronoi;
         private Color color;
@@ -56,8 +57,11 @@ namespace Game
             voronoi = new Voronoi<NodeVoronoi, Vector2>();
 
             AmountSafeChecks();
+            SetupObstacles();
 
             int towncenterNode = CreateMines(out var townCenterPosition);
+
+            Pathfinder = new AStarPathfinder<Node<Vector2>, Vector2, NodeVoronoi>(Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType);
 
             VoronoiSetup();
 
@@ -69,6 +73,31 @@ namespace Game
             for (int i = 0; i < caravansQuantity; i++)
             {
                 CreateCaravan(townCenterPosition, towncenterNode);
+            }
+        }
+
+        private void SetupObstacles()
+        {
+            for (int i = 0; i < Graph.CoordNodes.Count; i++)
+            {
+                if (Random.Range(0, 100) < 10)
+                {
+                    Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType[i].NodeType = NodeType.Blocked;
+                }
+            }
+            for (int i = 0; i < Graph.CoordNodes.Count; i++)
+            {
+                if (Random.Range(0, 100) < 10)
+                {
+                    Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType[i].NodeType = NodeType.Forest;
+                }
+            }
+            for (int i = 0; i < Graph.CoordNodes.Count; i++)
+            {
+                if (Random.Range(0, 100) < 10)
+                {
+                    Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType[i].NodeType = NodeType.Gravel;
+                }
             }
         }
 
@@ -142,6 +171,10 @@ namespace Game
         private void RemakeVoronoi()
         {
             List<NodeVoronoi> voronoiNodes = new List<NodeVoronoi>();
+            Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType.ForEach(node =>
+            {
+                if (node.NodeType == NodeType.Mine && node.gold <= 0) node.NodeType = NodeType.Empty;
+            });
             foreach (var mine in Graph<Node<Vector2>, NodeVoronoi, Vector2>.mines)
             {
                 if (mine.gold > 0)
@@ -175,6 +208,8 @@ namespace Game
                     NodeType.Mine => Color.yellow,
                     NodeType.Empty => Color.white,
                     NodeType.TownCenter => Color.blue,
+                    NodeType.Forest => Color.green,
+                    NodeType.Gravel => Color.gray,
                     NodeType.Blocked => Color.red,
                     _ => Color.white
                 };

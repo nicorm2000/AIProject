@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography;
+using StateMachine.Agents.RTS;
 
 namespace Pathfinder
 {
@@ -22,25 +21,9 @@ namespace Pathfinder
         /// <param name="graph">The collection of nodes representing the graph.</param>
         /// <param name="minCost">Minimum cost for a transition.</param>
         /// <param name="maxCost">Maximum cost for a transition.</param>
-        public AStarPathfinder(ICollection<NodeType> graph, int minCost = -1, int maxCost = 3)
+        public AStarPathfinder(ICollection<NodeType> graph)
         {
             this.Graph = graph;
-
-            graph.ToList().ForEach(node =>
-            {
-                List<Transition<NodeType>> transitionsList = new List<Transition<NodeType>>();
-
-                List<NodeType> neighbors = GetNeighbors(node) as List<NodeType>;
-                neighbors?.ForEach(neighbor =>
-                {
-                    transitionsList.Add(new Transition<NodeType>
-                    {
-                        to = neighbor,
-                        cost = minCost == 0 && maxCost == 0 ? 0 : RandomNumberGenerator.GetInt32(minCost, maxCost),
-                    });
-                });
-                transitions.Add(node, transitionsList);
-            });
         }
 
         /// <summary>
@@ -81,7 +64,7 @@ namespace Pathfinder
         /// <returns>True if the node is blocked; otherwise, false.</returns>
         protected override bool IsBlocked(NodeType node)
         {
-            return node.IsBlocked();
+            return node.GetNodeType() == Pathfinder.NodeType.Blocked;
         }
 
         /// <summary>
@@ -91,7 +74,7 @@ namespace Pathfinder
         /// <param name="B">The neighboring node.</param>
         /// <returns>The cost of moving to the neighbor node.</returns>
         /// <exception cref="InvalidOperationException">Thrown if B is not a neighbor of A.</exception>
-        protected override int MoveToNeighborCost(NodeType A, NodeType B)
+        protected override int MoveToNeighborCost(NodeType A, NodeType B, RTSAgent.AgentTypes type)
         {
             if (!GetNeighbors(A).Contains(B))
             {
@@ -100,15 +83,18 @@ namespace Pathfinder
 
             int cost = 0;
 
-            transitions.TryGetValue(A, out List<Transition<NodeType>> transition);
-
-            transition?.ForEach(t =>
+            switch (type)
             {
-                if (NodesEquals(t.to, B))
-                {
-                    cost = t.cost;
-                }
-            });
+                case RTSAgent.AgentTypes.Miner:
+                    if (B.GetNodeType() == Pathfinder.NodeType.Gravel) cost += 2;
+                    break;
+                case RTSAgent.AgentTypes.Caravan:
+                    if (B.GetNodeType() == Pathfinder.NodeType.Gravel) cost += 1;
+                    break;
+                default:
+                    cost = 0;
+                    break;
+            }
 
             return cost;
         }
@@ -127,17 +113,6 @@ namespace Pathfinder
             }
 
             return A.Equals(B);
-        }
-
-        /// <summary>
-        /// Compares two floating-point numbers for approximate equality.
-        /// </summary>
-        /// <param name="a">The first number.</param>
-        /// <param name="b">The second number.</param>
-        /// <returns>True if the numbers are approximately equal; otherwise, false.</returns>
-        private bool Approximately(float a, float b)
-        {
-            return Math.Abs(a - b) < 1e-6f;
         }
     }
 }

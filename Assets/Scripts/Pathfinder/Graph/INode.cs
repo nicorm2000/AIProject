@@ -45,5 +45,11 @@ namespace Pathfinder
         /// </summary>
         /// <returns>A collection of neighboring nodes.</returns>
         public ICollection<INode<Coordinate>> GetNeighbors();
+
+        /// <summary>
+        /// Gets the node type.
+        /// </summary>
+        /// <returns>The type of the node.</returns>
+        public NodeType GetNodeType();
     }
 }

@@ -11,7 +11,9 @@ namespace Pathfinder
         Empty,
         Blocked,
         Mine,
-        TownCenter
+        TownCenter,
+        Forest,
+        Gravel
     }
 
     /// <summary>
@@ -73,6 +75,15 @@ namespace Pathfinder
         public ICollection<INode<Coordinate>> GetNeighbors()
         {
             return neighbors as ICollection<INode<Coordinate>>;
+        }
+
+        /// <summary>
+        /// Gets the node type.
+        /// </summary>
+        /// <returns>The type of the node.</returns>
+        public NodeType GetNodeType()
+        {
+            return NodeType;
         }
 
         /// <summary>
