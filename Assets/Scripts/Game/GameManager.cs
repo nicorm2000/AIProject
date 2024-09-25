@@ -21,6 +21,8 @@ namespace Game
         [Header("Units Config")] 
         [SerializeField] private GameObject minerPrefab;
         [SerializeField] private GameObject caravanPrefab;
+        [SerializeField] private GameObject minePrefab;
+        [SerializeField] private GameObject townCenterPrefab;
         [SerializeField] private int minersQuantity;
         [SerializeField] private int cartsQuantity;
 
