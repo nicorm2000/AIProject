@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Game;
+using Pathfinder.Graph;
 using VoronoiDiagram;
 
 namespace Pathfinder.Voronoi
@@ -13,7 +13,7 @@ namespace Pathfinder.Voronoi
     /// <typeparam name="TCoordinateType">Type of the coordinate value.</typeparam>
     public class Sector<TCoordinate, TCoordinateType>
         where TCoordinate : IEquatable<TCoordinate>, ICoordinate<TCoordinateType>, new()
-        where TCoordinateType : IEquatable<TCoordinateType>
+        where TCoordinateType : IEquatable<TCoordinateType>, new()
     {
         private readonly List<Segment<TCoordinate, TCoordinateType>> segments = new();
         private readonly List<TCoordinate> intersections = new();
@@ -136,13 +136,13 @@ namespace Pathfinder.Voronoi
             TCoordinate p1 = seg1.Mediatrix;
             TCoordinate p2 = new TCoordinate();
             p2.SetCoordinate(seg1.Mediatrix.GetCoordinate());
-            p2.Add(seg1.Direction.Multiply(MapGenerator<TCoordinate, TCoordinateType>.MapDimensions.GetMagnitude()));
+            p2.Add(seg1.Direction.Multiply(Graph<Node<TCoordinateType>, TCoordinate, TCoordinateType>.MapDimensions.GetMagnitude()));
 
             // Define the endpoints of the second segment
             TCoordinate p3 = seg2.Mediatrix;
             TCoordinate p4 = new TCoordinate();
             p4.SetCoordinate(seg2.Mediatrix.GetCoordinate());
-            p4.Add(seg2.Direction.Multiply(MapGenerator<TCoordinate, TCoordinateType>.MapDimensions.GetMagnitude()));
+            p4.Add(seg2.Direction.Multiply(Graph<Node<TCoordinateType>, TCoordinate, TCoordinateType>.MapDimensions.GetMagnitude()));
 
             // Check if the two segments are parallel; if so, there is no intersection
             float denominator = (p1.GetX() - p2.GetX()) * (p3.GetY() - p4.GetY()) - (p1.GetY() - p2.GetY()) * (p3.GetX() - p4.GetX());

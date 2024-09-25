@@ -23,7 +23,16 @@ namespace Pathfinder.Graph
         /// <summary>
         /// A list storing the typed nodes of the graph.
         /// </summary>
-        public readonly List<TNodeType> NodesType = new List<TNodeType>();
+        public static readonly List<TNodeType> NodesType = new List<TNodeType>();
+
+        /// <summary>
+        /// A list storing the mines.
+        /// </summary>
+        public static List<Node<TCoordinateType>> mines = new List<Node<TCoordinateType>>();
+
+        public static TCoordinateNode MapDimensions;
+        public static float CellSize;
+        public static TCoordinateNode OriginPosition;
 
         /// <summary>
         /// Constructor for initializing the graph and its neighbor relationships.
@@ -33,6 +42,10 @@ namespace Pathfinder.Graph
         /// <param name="cellSize">Size of each cell in the grid.</param>
         public Graph(int x, int y, float cellSize)
         {
+            MapDimensions = new TCoordinateNode();
+            MapDimensions.SetCoordinate(x, y);
+            CellSize = cellSize;
+
             CreateGraph(x, y, cellSize);
             AddNeighbors(cellSize);
         }
