@@ -93,7 +93,7 @@ namespace StateMachine.Agents.RTS
 
         protected virtual void FsmBehaviours()
         {
-            Fsm.AddBehaviour<WaitState>(Behaviours.Wait, WaitTickParameters);
+            Fsm.AddBehaviour<WaitState>(Behaviours.Wait, WaitTickParameters, WaitEnterParameters, WaitExitParameters);
             Fsm.AddBehaviour<WalkState>(Behaviours.Walk, WalkTickParameters, WalkEnterParameters);
         }
 
@@ -166,12 +166,28 @@ namespace StateMachine.Agents.RTS
 
                     Debug.Log("walk to " + TargetNode.GetCoordinate().x + " - " + TargetNode.GetCoordinate().y);
                 });
+            Fsm.SetTransition(Behaviours.Wait, Flags.OnRetreat, Behaviours.Walk,
+                () =>
+                {
+                    TargetNode = GetTarget(NodeType.TownCenter);
+                    Debug.Log("Retreat. Walk to " + TargetNode.GetCoordinate().x + " - " + TargetNode.GetCoordinate().y);
+                });
         }
 
         protected virtual object[] WaitTickParameters()
         {
             object[] objects = { Retreat, Food, CurrentGold, CurrentNode, OnWait };
             return objects;
+        }
+
+        protected virtual object[] WaitEnterParameters()
+        {
+            return null;
+        }
+
+        protected virtual object[] WaitExitParameters()
+        {
+            return null;
         }
 
         protected virtual void GetFoodTransitions()

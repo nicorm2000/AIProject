@@ -75,6 +75,15 @@ namespace StateMachine.Agents.RTS
             Fsm.SetTransition(Behaviours.Walk, Flags.OnGather, Behaviours.GatherResources,
                 () => Debug.Log("Gather gold"));
         }
+        protected override object[] WaitEnterParameters()
+        {
+            return new object[] { CurrentNode, OnReachMine };
+        }
+
+        protected override object[] WaitExitParameters()
+        {
+            return new object[] { CurrentNode, OnLeaveMine };
+        }
 
         private void Mine()
         {
