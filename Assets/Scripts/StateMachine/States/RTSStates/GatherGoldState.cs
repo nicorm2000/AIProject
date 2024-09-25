@@ -8,7 +8,6 @@ namespace StateMachine.States.RTSStates
 {
     public class GatherGoldState : State
     {
-        private Action<int> Onmine;
         public override BehaviourActions GetTickBehaviour(params object[] parameters)
         {
             BehaviourActions behaviours = new BehaviourActions();

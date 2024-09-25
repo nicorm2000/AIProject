@@ -44,8 +44,8 @@ namespace Game
         private void Start()
         {
             Miner.OnEmptyMine += RemakeVoronoi;
-            Miner.OnReachMine += (node) => MinesWithMiners.Add(node);
-            Miner.OnLeaveMine += (node) => MinesWithMiners.Remove(node);
+            Miner.OnReachMine += OnReachMine;
+            Miner.OnLeaveMine += OnLeaveMine;
 
             alarmButton.onClick.AddListener(Retreat);
 
@@ -74,6 +74,21 @@ namespace Game
             {
                 CreateCaravan(townCenterPosition, towncenterNode);
             }
+        }
+
+        private void OnReachMine(Node<Vector2> node)
+        {
+            RemoveEmptyNodes();
+            MinesWithMiners.Add(node);
+        }
+        private void OnLeaveMine(Node<Vector2> node)
+        {
+            MinesWithMiners.Remove(node);
+            RemoveEmptyNodes();
+        }
+        public void RemoveEmptyNodes()
+        {
+            MinesWithMiners.RemoveAll(node => node.NodeType == NodeType.Empty);
         }
 
         private void SetupObstacles()
@@ -214,7 +229,7 @@ namespace Game
                     _ => Color.white
                 };
 
-                Gizmos.DrawSphere(new Vector3(node.GetCoordinate().x, node.GetCoordinate().y), nodesSize);
+                Gizmos.DrawSphere(new Vector3(node.GetCoordinate().x, node.GetCoordinate().y), nodesSize / 5);
             }
         }
     }

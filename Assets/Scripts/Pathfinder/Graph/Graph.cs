@@ -77,10 +77,9 @@ namespace Pathfinder.Graph
                     // Check if the current node (i) and another node (j) are adjacent based on cell size
                     // Conditions include checking x-axis, y-axis, and diagonal adjacency
                     bool isNeighbor =
-                        (Approximately(CoordNodes[i].GetX(), CoordNodes[j].GetX()) &&
-                         Approximately(Math.Abs(CoordNodes[i].GetY() - CoordNodes[j].GetY()), cellSize)) ||
-                        (Approximately(CoordNodes[i].GetY(), CoordNodes[j].GetY()) &&
-                         Approximately(Math.Abs(CoordNodes[i].GetX() - CoordNodes[j].GetX()), cellSize));
+                        (Approximately(CoordNodes[i].GetX(), CoordNodes[j].GetX()) && Approximately(Math.Abs(CoordNodes[i].GetY() - CoordNodes[j].GetY()), cellSize)) ||
+                        (Approximately(CoordNodes[i].GetY(), CoordNodes[j].GetY()) && Approximately(Math.Abs(CoordNodes[i].GetX() - CoordNodes[j].GetX()), cellSize)) ||
+                        (Approximately(Math.Abs(CoordNodes[i].GetX() - CoordNodes[j].GetX()), cellSize) && Approximately(Math.Abs(CoordNodes[i].GetY() - CoordNodes[j].GetY()), cellSize));
 
                     if (isNeighbor)
                     {

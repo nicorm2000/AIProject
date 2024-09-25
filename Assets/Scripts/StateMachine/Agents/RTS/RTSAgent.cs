@@ -37,6 +37,7 @@ namespace StateMachine.Agents.RTS
         }
 
         public static Node<Vector2> TownCenter;
+
         public static bool Retreat;
         public Node<Vector2> CurrentNode;
         public Voronoi<NodeVoronoi, Vector2> Voronoi;
@@ -58,6 +59,7 @@ namespace StateMachine.Agents.RTS
 
         protected Action OnMove;
         protected Action OnWait;
+
         protected int Food = 3;
         protected int CurrentGold = 0;
         protected int LastTimeEat = 0;
@@ -87,6 +89,7 @@ namespace StateMachine.Agents.RTS
             FsmTransitions();
         }
 
+
         protected virtual void FsmTransitions()
         {
             WalkTransitions();
@@ -95,6 +98,7 @@ namespace StateMachine.Agents.RTS
             GetFoodTransitions();
             DeliverTransitions();
         }
+
 
         protected virtual void FsmBehaviours()
         {
@@ -108,7 +112,6 @@ namespace StateMachine.Agents.RTS
                 () =>
                 {
                     TargetNode = GetTarget(NodeType.TownCenter);
-
                     if (TargetNode == null) return;
 
                     Debug.Log("Retreat to " + TargetNode.GetCoordinate().x + " - " + TargetNode.GetCoordinate().y);
@@ -129,19 +132,16 @@ namespace StateMachine.Agents.RTS
                 () =>
                 {
                     TargetNode = GetTarget(NodeType.TownCenter);
-
                     if (TargetNode == null) return;
 
-                    Debug.Log("Retreat. Walk to " + TargetNode.GetCoordinate().x + " - " +
-                              TargetNode.GetCoordinate().y);
+                    Debug.Log("Retreat. Walk to " + TargetNode.GetCoordinate().x + " - " + TargetNode.GetCoordinate().y);
                 });
 
             Fsm.SetTransition(Behaviours.Walk, Flags.OnTargetLost, Behaviours.Walk,
                 () =>
                 {
-                    TargetNode = GetTarget(NodeType.Mine);
-
-                    if (TargetNode == null) return;
+                    TargetNode = GetTarget(NodeType.TownCenter);
+                        if (TargetNode == null) return;
 
                     Debug.Log("Walk to " + TargetNode.GetCoordinate().x + " - " + TargetNode.GetCoordinate().y);
                 });
@@ -167,7 +167,6 @@ namespace StateMachine.Agents.RTS
                 () =>
                 {
                     TargetNode = GetTarget(NodeType.Mine);
-
                     if (TargetNode == null) return;
 
                     Debug.Log("walk to " + TargetNode.GetCoordinate().x + " - " + TargetNode.GetCoordinate().y);
@@ -175,8 +174,7 @@ namespace StateMachine.Agents.RTS
             Fsm.SetTransition(Behaviours.Wait, Units.Flags.OnTargetLost, Behaviours.Walk,
                 () =>
                 {
-                    TargetNode = GetTarget(NodeType.Mine); ;
-
+                    TargetNode = GetTarget(NodeType.Mine);
                     if (TargetNode == null) return;
 
                     Debug.Log("walk to " + TargetNode.GetCoordinate().x + " - " + TargetNode.GetCoordinate().y);
@@ -185,7 +183,6 @@ namespace StateMachine.Agents.RTS
                 () =>
                 {
                     TargetNode = GetTarget(NodeType.TownCenter);
-
                     if (TargetNode == null) return;
 
                     Debug.Log("Retreat. Walk to " + TargetNode.GetCoordinate().x + " - " + TargetNode.GetCoordinate().y);
@@ -207,6 +204,7 @@ namespace StateMachine.Agents.RTS
         {
             return null;
         }
+
 
         protected virtual void GetFoodTransitions()
         {

@@ -52,9 +52,7 @@ namespace StateMachine.Agents.RTS
                 () =>
                 {
                     TargetNode = GetTarget();
-
                     if (TargetNode == null) return;
-
                     Debug.Log("Mine empty. Walk to " + TargetNode.GetCoordinate().x + " - " + TargetNode.GetCoordinate().y);
                 });
         }
@@ -80,6 +78,7 @@ namespace StateMachine.Agents.RTS
             Fsm.SetTransition(Behaviours.Walk, Flags.OnGather, Behaviours.GatherResources,
                 () => Debug.Log("Gather gold"));
         }
+
         protected override object[] WaitEnterParameters()
         {
             return new object[] { CurrentNode, OnReachMine };
