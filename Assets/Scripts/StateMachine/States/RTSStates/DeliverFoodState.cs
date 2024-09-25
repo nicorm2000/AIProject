@@ -1,8 +1,6 @@
 using System;
-using Pathfinder;
 using StateMachine.Agents.RTS;
 using States;
-using UnityEngine;
 
 namespace StateMachine.States.RTSStates
 {

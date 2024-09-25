@@ -30,6 +30,7 @@ namespace Game
         private Color color;
         private void Start()
         {
+            Miner.OnEmptyMine += RemakeVoronoi;
             if (!Application.isPlaying)
                 return;
             
@@ -53,18 +54,17 @@ namespace Game
             int towncenterNode = Random.Range(0, graph.CoordNodes.Count);
             graph.NodesType[towncenterNode].NodeType = NodeType.TownCenter;
 
-            MapGenerator<NodeVoronoi, Vector2>.nodes = graph.NodesType;
-
             Vector3 townCenterPosition = new Vector3(graph.CoordNodes[towncenterNode].GetCoordinate().x,
                 graph.CoordNodes[towncenterNode].GetCoordinate().y);
 
-            voronoi.Init();
+            MapGenerator<NodeVoronoi, Vector2>.nodes = graph.NodesType;
             List<NodeVoronoi> voronoiNodes = new List<NodeVoronoi>();
             for (int i = 0; i < MapGenerator<NodeVoronoi, Vector2>.mines.Count; i++)
             {
                 voronoiNodes.Add(graph.CoordNodes.Find((node => node.GetCoordinate() == MapGenerator<NodeVoronoi, Vector2>.mines[i].GetCoordinate())));
             }
-  
+            voronoi.Init();
+
             GameObject miner = Instantiate(minerPrefab, townCenterPosition, Quaternion.identity);
             Miner agent = miner.GetComponent<Miner>();
             agent.currentNode = graph.NodesType[towncenterNode];
@@ -76,7 +76,17 @@ namespace Game
             agent2.currentNode = graph.NodesType[towncenterNode];
             agent2.voronoi = voronoi;
             agent2.Init();
-            //voronoi.Init();
+            voronoi.SetVoronoi(voronoiNodes);
+        }
+
+        private void RemakeVoronoi()
+        {
+            List<NodeVoronoi> voronoiNodes = new List<NodeVoronoi>();
+            foreach (var mine in MapGenerator<NodeVoronoi, Vector2>.mines)
+            {
+                if (mine.gold > 0)
+                    voronoiNodes.Add(graph.CoordNodes.Find(node => node.GetCoordinate() == mine.GetCoordinate()));
+            }
             voronoi.SetVoronoi(voronoiNodes);
         }
 

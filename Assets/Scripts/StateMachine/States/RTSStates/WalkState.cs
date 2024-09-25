@@ -33,7 +33,7 @@ namespace StateMachine.States.RTSStates
                     Debug.LogError("One or more required parameters are null.");
                     return;
                 }
-                
+
                 position.position = new Vector3(currentNode.GetCoordinate().x, currentNode.GetCoordinate().y);
             });
 
@@ -45,6 +45,7 @@ namespace StateMachine.States.RTSStates
                     i = 0;
                     return;
                 }
+
 
                 if (currentNode == null || targetNode == null || targetNode.NodeType == NodeType.Mine && targetNode.gold <= 0)
                 {
@@ -79,15 +80,18 @@ namespace StateMachine.States.RTSStates
         public override BehaviourActions GetOnEnterBehaviour(params object[] parameters)
         {
             BehaviourActions behaviours = new BehaviourActions();
+
             Node<Vector2> currentNode = parameters[0] as Node<Vector2>;
             Node<Vector2> targetNode = parameters[1] as Node<Vector2>;
             List<Node<Vector2>> path = (List<Node<Vector2>>)parameters[2];
             Pathfinder<Node<Vector2>, Vector2, NodeVoronoi> pathfinder =
                 parameters[3] as Pathfinder<Node<Vector2>, Vector2, NodeVoronoi>;
+
             behaviours.AddMultiThreadableBehaviours(0, () =>
             {
                 path = pathfinder.FindPath(currentNode, targetNode);
             });
+
             return behaviours;
         }
 

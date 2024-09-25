@@ -1,4 +1,6 @@
 ﻿using System;
+using Game;
+using Pathfinder;
 using StateMachine.States.RTSStates;
 using UnityEngine;
 
@@ -7,6 +9,7 @@ namespace StateMachine.Agents.RTS
     public class Miner : RTSAgent
     {
         private Action onMine;
+        public static Action OnEmptyMine;
         public override void Init()
         {
             base.Init();
@@ -16,11 +19,12 @@ namespace StateMachine.Agents.RTS
 
         private void Mine()
         {
-            if (Food <= 0) return;
+            if (Food <= 0 || currentNode.gold <= 0) return;
             _currentGold++;
 
             _lastTimeEat++;
             currentNode.gold--;
+            if (currentNode.gold <= 0) OnEmptyMine?.Invoke();
             if (_lastTimeEat < GoldPerFood) return;
             Food--;
             _lastTimeEat = 0;
@@ -51,23 +55,29 @@ namespace StateMachine.Agents.RTS
             _fsm.SetTransition(Behaviours.GatherResources, Flags.OnFull, Behaviours.Walk,
                 () =>
                 {
-                    targetNode = townCenter;
-                    _path = _pathfinder.FindPath(currentNode, targetNode);
-                    pathNodeId = 0;
-                    Debug.Log("Gold full. Walk to " + targetNode.GetCoordinate().x + " - " + targetNode.GetCoordinate().y);
+                    TargetNode = townCenter;
+
+                    Debug.Log("Gold full. Walk to " + TargetNode.GetCoordinate().x + " - " + TargetNode.GetCoordinate().y);
+                });
+            _fsm.SetTransition(Behaviours.GatherResources, Flags.OnTargetLost, Behaviours.Walk,
+                () =>
+                {
+                    Vector2 position = transform.position;
+                    Node<Vector2> target = voronoi.GetMineCloser(GameManager.graph.CoordNodes.Find(nodeVoronoi => nodeVoronoi.GetCoordinate() == position));
+                    TargetNode = MapGenerator<NodeVoronoi, Vector2>.nodes.Find(node => node.GetCoordinate() == target.GetCoordinate());
+                    Debug.Log("Mine empty. Walk to " + TargetNode.GetCoordinate().x + " - " + TargetNode.GetCoordinate().y);
                 });
         }
 
         protected override void WalkTransitions()
         {
             base.WalkTransitions();
-            _fsm.SetTransition(Behaviours.Walk, Flags.OnGather, Behaviours.GatherResources,
-                () => Debug.Log("Gather gold"));
+            _fsm.SetTransition(Behaviours.Walk, Flags.OnGather, Behaviours.GatherResources, () => Debug.Log("Gather gold"));
         }
 
         protected override object[] GatherTickParameters()
         {
-            return new object[] { false, Food, _currentGold, GoldLimit, onMine };
+            return new object[] { false, Food, _currentGold, GoldLimit, onMine, currentNode };
         }
     }
 }
