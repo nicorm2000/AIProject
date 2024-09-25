@@ -178,6 +178,7 @@ MonoBehaviour:
   townCenterPrefab: {fileID: 2011619848210902356, guid: f5cfd40e3850b6b40bbe2da775a166ed, type: 3}
   minersQuantity: 0
   cartsQuantity: 0
+  alarmButton: {fileID: 799938818}
 --- !u!1 &478465509
 GameObject:
   m_ObjectHideFlags: 0
