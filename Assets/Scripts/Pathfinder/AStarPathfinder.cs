@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
-using Vector2 = Utils.Vec2Int;
 
 namespace Pathfinder
 {
@@ -11,9 +10,11 @@ namespace Pathfinder
     /// </summary>
     /// <typeparam name="NodeType">The type of the nodes in the graph.</typeparam>
     /// <typeparam name="CoordinateType">The type of the coordinates used by the nodes.</typeparam>
-    public class AStarPathfinder<NodeType, CoordinateType> : Pathfinder<NodeType, CoordinateType>
-        where NodeType : INode, INode<CoordinateType>, new()
-        where CoordinateType : IEquatable<CoordinateType>
+    /// <typeparam name="TCoordinate">The type of the coordinates.</typeparam>
+    public class AStarPathfinder<NodeType, CoordinateType, TCoordinate> : Pathfinder<NodeType, CoordinateType, TCoordinate>
+           where NodeType : INode, INode<CoordinateType>, new()
+           where CoordinateType : IEquatable<CoordinateType>
+           where TCoordinate : ICoordinate<CoordinateType>, new()
     {
         /// <summary>
         /// Initializes a new instance of the AStarPathfinder class.
@@ -25,22 +26,21 @@ namespace Pathfinder
         {
             this.Graph = graph;
 
-            foreach (var node in graph)
+            graph.ToList().ForEach(node =>
             {
                 List<Transition<NodeType>> transitionsList = new List<Transition<NodeType>>();
 
-                var neighbors = GetNeighbors(node) as List<NodeType>;
+                List<NodeType> neighbors = GetNeighbors(node) as List<NodeType>;
                 neighbors?.ForEach(neighbor =>
                 {
                     transitionsList.Add(new Transition<NodeType>
                     {
                         to = neighbor,
-                        cost = (minCost == 0 && maxCost == 0) ? 0 : RandomNumberGenerator.GetInt32(minCost, maxCost),
+                        cost = minCost == 0 && maxCost == 0 ? 0 : RandomNumberGenerator.GetInt32(minCost, maxCost),
                     });
                 });
-
                 transitions.Add(node, transitionsList);
-            }
+            });
         }
 
         /// <summary>
@@ -49,18 +49,19 @@ namespace Pathfinder
         /// <param name="A">The first node.</param>
         /// <param name="B">The second node.</param>
         /// <returns>The calculated distance between the nodes.</returns>
-        protected override int Distance(NodeType A, NodeType B)
+        protected override int Distance(TCoordinate A, TCoordinate B)
         {
             if (A == null || B == null)
             {
                 return int.MaxValue;
             }
 
-            Node<Vector2> nodeA = A as Node<Vector2>;
-            Node<Vector2> nodeB = B as Node<Vector2>;
+            float distance = 0;
 
-            return (int)(Math.Abs(nodeA.GetCoordinate().x - nodeB.GetCoordinate().x) +
-                          Math.Abs(nodeA.GetCoordinate().y - nodeB.GetCoordinate().y));
+            distance += Math.Abs(A.GetX() - B.GetX());
+            distance += Math.Abs(A.GetY() - B.GetY());
+
+            return (int)distance;
         }
 
         /// <summary>
@@ -97,9 +98,19 @@ namespace Pathfinder
                 throw new InvalidOperationException("B node has to be a neighbor.");
             }
 
+            int cost = 0;
+
             transitions.TryGetValue(A, out List<Transition<NodeType>> transition);
 
-            return transition?.FirstOrDefault(t => NodesEquals(t.to, B)).cost ?? 0;
+            transition?.ForEach(t =>
+            {
+                if (NodesEquals(t.to, B))
+                {
+                    cost = t.cost;
+                }
+            });
+
+            return cost;
         }
 
         /// <summary>
@@ -115,12 +126,7 @@ namespace Pathfinder
                 return false;
             }
 
-            var nodeA = A as Node<Vector2>;
-            var nodeB = B as Node<Vector2>;
-
-            return nodeA != null && nodeB != null &&
-                   Approximately(nodeA.GetCoordinate().x, nodeB.GetCoordinate().x) &&
-                   Approximately(nodeA.GetCoordinate().y, nodeB.GetCoordinate().y);
+            return A.Equals(B);
         }
 
         /// <summary>

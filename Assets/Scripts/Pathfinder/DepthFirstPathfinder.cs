@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Utils;
+using UnityEngine;
 
 namespace Pathfinder
 {
@@ -9,9 +9,10 @@ namespace Pathfinder
     /// </summary>
     /// <typeparam name="NodeType">The type of the nodes in the graph.</typeparam>
     /// <typeparam name="TCoordinateType">The type of the coordinates used by the nodes.</typeparam>
-    public class DepthFirstPathfinder<NodeType, TCoordinateType> : Pathfinder<NodeType, TCoordinateType>
+    public class DepthFirstPathfinder<NodeType, TCoordinateType, TCoordinate> : Pathfinder<NodeType, TCoordinateType, TCoordinate>
         where NodeType : INode<TCoordinateType>, new()
         where TCoordinateType : IEquatable<TCoordinateType>
+        where TCoordinate : ICoordinate<TCoordinateType>, new()
     {
         /// <summary>
         /// Initializes a new instance of the DepthFirstPathfinder class.
@@ -29,16 +30,16 @@ namespace Pathfinder
         /// <param name="A">The first node.</param>
         /// <param name="B">The second node.</param>
         /// <returns>The calculated distance between the nodes.</returns>
-        protected override int Distance(NodeType A, NodeType B)
+        protected override int Distance(TCoordinate A, TCoordinate B)
         {
-            int distance = 0;
-            Node<Vec2Int> nodeA = A as Node<Vec2Int>;
-            Node<Vec2Int> nodeB = B as Node<Vec2Int>;
+            float distance = 0;
+            Node<Vector2> nodeA = A as Node<Vector2>;
+            Node<Vector2> nodeB = B as Node<Vector2>;
 
             distance += Math.Abs(nodeA.GetCoordinate().x - nodeB.GetCoordinate().x);
             distance += Math.Abs(nodeA.GetCoordinate().y - nodeB.GetCoordinate().y);
 
-            return distance;
+            return (int)distance;
         }
 
         /// <summary>

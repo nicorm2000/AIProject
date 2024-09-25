@@ -17,22 +17,24 @@ namespace Pathfinder
     /// <summary>
     /// Abstract base class for a generic pathfinding algorithm, which implements a pathfinding process similar to A*.
     /// </summary>
-    /// <typeparam name="NodeType">The type of the node in the graph.</typeparam>
+    /// <typeparam name="TNodeType">The type of the node in the graph.</typeparam>
     /// <typeparam name="TCoordinateType">The type of the coordinate used by the nodes.</typeparam>
-    public abstract class Pathfinder<NodeType, TCoordinateType>
-        where NodeType : INode<TCoordinateType>
+    /// <typeparam name="TCoordinate">The type of the coordinate.</typeparam>
+    public abstract class Pathfinder<TNodeType, TCoordinateType, TCoordinate>
+        where TNodeType : INode<TCoordinateType>
         where TCoordinateType : IEquatable<TCoordinateType>
+        where TCoordinate : ICoordinate<TCoordinateType>, new()
     {
         /// <summary>
         /// The graph represented as a collection of nodes.
         /// </summary>
-        protected ICollection<NodeType> Graph;
+        protected ICollection<TNodeType> Graph;
 
         /// <summary>
         /// A dictionary that holds the transitions for each node, mapping it to a list of possible transitions.
         /// </summary>
-        public Dictionary<NodeType, List<Transition<NodeType>>> transitions =
-            new Dictionary<NodeType, List<Transition<NodeType>>>();
+        public Dictionary<TNodeType, List<Transition<TNodeType>>> transitions =
+            new Dictionary<TNodeType, List<Transition<TNodeType>>>();
 
         /// <summary>
         /// Finds the optimal path from a starting node to a destination node using the pathfinding algorithm.
@@ -40,24 +42,26 @@ namespace Pathfinder
         /// <param name="startNode">The starting node.</param>
         /// <param name="destinationNode">The goal node.</param>
         /// <returns>A list of nodes representing the path, or null if no path is found.</returns>
-        public List<NodeType> FindPath(NodeType startNode, NodeType destinationNode)
+        public List<TNodeType> FindPath(TNodeType startNode, TNodeType destinationNode)
         {
-            Dictionary<NodeType, (NodeType Parent, int AcumulativeCost, int Heuristic)> nodes =
-                new Dictionary<NodeType, (NodeType Parent, int AcumulativeCost, int Heuristic)>();
+            Dictionary<TNodeType, (TNodeType Parent, int AcumulativeCost, int Heuristic)> nodes =
+    new Dictionary<TNodeType, (TNodeType Parent, int AcumulativeCost, int Heuristic)>();
 
-            foreach (NodeType node in Graph)
+            foreach (TNodeType node in Graph)
             {
                 nodes.Add(node, (default, 0, 0));
             }
 
-            List<NodeType> openList = new List<NodeType>();  // Nodes to explore
-            List<NodeType> closedList = new List<NodeType>();  // Nodes already explored
+            TCoordinate startCoor = new TCoordinate();
+            startCoor.SetCoordinate(startNode.GetCoordinate());
+            List<TNodeType> openList = new List<TNodeType>(); // Nodes to explore
+            List<TNodeType> closedList = new List<TNodeType>(); // Nodes already explored
 
             openList.Add(startNode);
 
             while (openList.Count > 0)
             {
-                NodeType currentNode = openList[0];
+                TNodeType currentNode = openList[0];
                 int currentIndex = 0;
 
                 // Find the node in the open list with the lowest accumulated cost + heuristic
@@ -80,22 +84,27 @@ namespace Pathfinder
                 }
 
                 // Explore neighbors of the current node
-                foreach (NodeType neighbor in GetNeighbors(currentNode))
+                foreach (TNodeType neighbor in GetNeighbors(currentNode))
                 {
                     if (!nodes.ContainsKey(neighbor) || IsBlocked(neighbor) || closedList.Contains(neighbor))
                     {
                         continue;
                     }
 
-                    int aproxAcumulativeCost = nodes[currentNode].AcumulativeCost;
+                    int aproxAcumulativeCost = 0;
+
+                    aproxAcumulativeCost += nodes[currentNode].AcumulativeCost;
                     aproxAcumulativeCost += MoveToNeighborCost(currentNode, neighbor);  // Add movement cost to the neighbor
 
                     // Skip if the neighbor is already in the open list and the cost is not lower
                     if (openList.Contains(neighbor) && aproxAcumulativeCost >= nodes[neighbor].AcumulativeCost)
                         continue;
 
+                    TCoordinate neighborCoor = new TCoordinate();
+                    neighborCoor.SetCoordinate(neighbor.GetCoordinate());
+
                     // Update the node's parent, accumulated cost, and heuristic (distance to destination)
-                    nodes[neighbor] = (currentNode, aproxAcumulativeCost, Distance(neighbor, destinationNode));
+                    nodes[neighbor] = (currentNode, aproxAcumulativeCost, Distance(neighborCoor, startCoor));
 
                     if (!openList.Contains(neighbor))
                     {
@@ -113,10 +122,10 @@ namespace Pathfinder
             /// <param name="startNode">The starting node.</param>
             /// <param name="goalNode">The goal node.</param>
             /// <returns>A list of nodes representing the path from start to goal.</returns>
-            List<NodeType> GeneratePath(NodeType startNode, NodeType goalNode)
+            List<TNodeType> GeneratePath(TNodeType startNode, TNodeType goalNode)
             {
-                List<NodeType> path = new List<NodeType>();
-                NodeType currentNode = goalNode;
+                List<TNodeType> path = new List<TNodeType>();
+                TNodeType currentNode = goalNode;
 
                 // Trace back the path using the parent of each node
                 while (!NodesEquals(currentNode, startNode))
@@ -140,15 +149,15 @@ namespace Pathfinder
         /// </summary>
         /// <param name="node">The current node.</param>
         /// <returns>A collection of neighboring nodes.</returns>
-        protected abstract ICollection<INode<TCoordinateType>> GetNeighbors(NodeType node);
+        protected abstract ICollection<INode<TCoordinateType>> GetNeighbors(TNodeType node);
 
         /// <summary>
         /// Abstract method to calculate the distance between two nodes.
         /// </summary>
-        /// <param name="A">Node A.</param>
-        /// <param name="B">Node B.</param>
+        /// <param name="A">TCoordinate A.</param>
+        /// <param name="B">TCoordinate B.</param>
         /// <returns>The distance between node A and node B.</returns>
-        protected abstract int Distance(NodeType A, NodeType B);
+        protected abstract int Distance(TCoordinate tCoordinate, TCoordinate coordinate);
 
         /// <summary>
         /// Abstract method to determine if two nodes are equal.
@@ -156,7 +165,7 @@ namespace Pathfinder
         /// <param name="A">Node A.</param>
         /// <param name="B">Node B.</param>
         /// <returns>True if the nodes are equal, otherwise false.</returns>
-        protected abstract bool NodesEquals(NodeType A, NodeType B);
+        protected abstract bool NodesEquals(TNodeType A, TNodeType B);
 
         /// <summary>
         /// Abstract method to calculate the cost of moving from one node to a neighboring node.
@@ -164,13 +173,13 @@ namespace Pathfinder
         /// <param name="A">Node A.</param>
         /// <param name="B">Neighboring node B.</param>
         /// <returns>The movement cost from A to B.</returns>
-        protected abstract int MoveToNeighborCost(NodeType A, NodeType B);
+        protected abstract int MoveToNeighborCost(TNodeType A, TNodeType B);
 
         /// <summary>
         /// Abstract method to determine if a node is blocked or inaccessible.
         /// </summary>
         /// <param name="node">The node to check.</param>
         /// <returns>True if the node is blocked, otherwise false.</returns>
-        protected abstract bool IsBlocked(NodeType node);
+        protected abstract bool IsBlocked(TNodeType node);
     }
 }
