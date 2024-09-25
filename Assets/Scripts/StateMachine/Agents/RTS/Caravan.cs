@@ -54,11 +54,15 @@ namespace StateMachine.Agents.RTS
                     Vector2 position = transform.position;
                     Node<Vector2> target = voronoi.GetMineCloser(GameManager.graph.CoordNodes.Find((nodeVoronoi => nodeVoronoi.GetCoordinate() == position)));
                     targetNode = GameManager.graph.NodesType.Find((node => node.GetCoordinate() == target.GetCoordinate()));
+                    _path = _pathfinder.FindPath(currentNode, targetNode);
+                    pathNodeId = 0;
                 });
             _fsm.SetTransition(Behaviours.GatherResources, Flags.OnRetreat, Behaviours.Walk,
                 () =>
                 {
                     targetNode = townCenter;
+                    _path = _pathfinder.FindPath(currentNode, targetNode);
+                    pathNodeId = 0;
                     Debug.Log("Retreat. Walk to " + targetNode.GetCoordinate().x + " - " + targetNode.GetCoordinate().y);
                 });
         }
@@ -69,6 +73,8 @@ namespace StateMachine.Agents.RTS
                 () =>
                 {
                     targetNode = townCenter;
+                    _path = _pathfinder.FindPath(currentNode, targetNode);
+                    pathNodeId = 0;
                     Debug.Log("Retreat. Walk to " + targetNode.GetCoordinate().x + " - " + targetNode.GetCoordinate().y);
                 });
 
@@ -78,6 +84,8 @@ namespace StateMachine.Agents.RTS
                     Vector2 position = transform.position;
                     Node<Vector2> target = voronoi.GetMineCloser(GameManager.graph.CoordNodes.Find((nodeVoronoi => nodeVoronoi.GetCoordinate() == position)));
                     targetNode = GameManager.graph.NodesType.Find((node => node.GetCoordinate() == target.GetCoordinate()));
+                    _path = _pathfinder.FindPath(currentNode, targetNode);
+                    pathNodeId = 0;
                     Debug.Log("Walk to " + targetNode.GetCoordinate().x + " - " + targetNode.GetCoordinate().y);
                 });
             _fsm.SetTransition(Behaviours.Walk, Flags.OnGather, Behaviours.Deliver,
@@ -102,12 +110,16 @@ namespace StateMachine.Agents.RTS
                 () =>
                 {
                     targetNode = townCenter;
+                    _path = _pathfinder.FindPath(currentNode, targetNode);
+                    pathNodeId = 0;
                     Debug.Log("To town center");
                 });
             _fsm.SetTransition(Behaviours.Deliver, Flags.OnRetreat, Behaviours.Walk,
                 () =>
                 {
                     targetNode = townCenter;
+                    _path = _pathfinder.FindPath(currentNode, targetNode);
+                    pathNodeId = 0;
                     Debug.Log("Retreat. Walk to " + targetNode.GetCoordinate().x + " - " + targetNode.GetCoordinate().y);
                 });
         }
