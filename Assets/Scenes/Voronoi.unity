@@ -174,10 +174,14 @@ MonoBehaviour:
   originPosition: {x: -0.5, y: -0.5}
   minerPrefab: {fileID: 2785322424147078408, guid: 40cb8ae62e1a2ed4e857f1bc1d348a61, type: 3}
   caravanPrefab: {fileID: 4554709164701513831, guid: f2e723e0f6f769a41b04e83e8a055270, type: 3}
-  minePrefab: {fileID: 1858202831461460153, guid: cbe4efb9184b58342b7176015e2e3095, type: 3}
+  goldminePrefab: {fileID: 1858202831461460153, guid: cbe4efb9184b58342b7176015e2e3095, type: 3}
   townCenterPrefab: {fileID: 2011619848210902356, guid: f5cfd40e3850b6b40bbe2da775a166ed, type: 3}
-  minersQuantity: 0
-  cartsQuantity: 0
+  grassPrefab: {fileID: 6078024256796812795, guid: 2387081e86968134ba0a2e7ed7cd2efc, type: 3}
+  forestPrefab: {fileID: 3578413258240903277, guid: b430c8e094dddd34a8712408bc31fed6, type: 3}
+  gravelPrefab: {fileID: 5285623229498443562, guid: 62c60dc821d53bb49b6ecb328024050a, type: 3}
+  treeCutDownPrefab: {fileID: 2120631097958094928, guid: 5f3bf03c2ed57e94fa90518439e97f56, type: 3}
+  minersQuantity: 1
+  caravansQuantity: 1
   alarmButton: {fileID: 799938818}
 --- !u!1 &478465509
 GameObject:
