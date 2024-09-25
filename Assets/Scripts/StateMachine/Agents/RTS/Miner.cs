@@ -1,7 +1,5 @@
 ﻿using System;
-using Game;
 using Pathfinder;
-using Pathfinder.Graph;
 using StateMachine.States.RTSStates;
 using UnityEngine;
 
@@ -11,27 +9,14 @@ namespace StateMachine.Agents.RTS
     {
         private Action onMine;
         public static Action OnEmptyMine;
+        public static Action<Node<Vector2>> OnReachMine;
+        public static Action<Node<Vector2>> OnLeaveMine;
+
         public override void Init()
         {
             base.Init();
             Fsm.ForceTransition(Behaviours.Walk);
             onMine += Mine;
-        }
-
-        private void Mine()
-        {
-            if (Food <= 0 || CurrentNode.gold <= 0) return;
-            CurrentGold++;
-
-            LastTimeEat++;
-            CurrentNode.gold--;
-            if (CurrentNode.gold <= 0) OnEmptyMine?.Invoke();
-            if (LastTimeEat < GoldPerFood) return;
-            Food--;
-            LastTimeEat = 0;
-            if (Food > 0 || CurrentNode.food <= 0) return;
-            Food++;
-            CurrentNode.food--;
         }
 
         protected override void FsmTransitions()
@@ -44,7 +29,7 @@ namespace StateMachine.Agents.RTS
         protected override void FsmBehaviours()
         {
             base.FsmBehaviours();
-            Fsm.AddBehaviour<GatherGoldState>(Behaviours.GatherResources, GatherTickParameters);
+            Fsm.AddBehaviour<GatherGoldState>(Behaviours.GatherResources, GatherTickParameters, GatherEnterParameters, GatherLeaveParameters);
         }
 
         protected override void GatherTransitions()
@@ -56,29 +41,60 @@ namespace StateMachine.Agents.RTS
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnFull, Behaviours.Walk,
                 () =>
                 {
-                    TargetNode = TownCenter;
+                    TargetNode = GetTarget(NodeType.TownCenter);
 
                     Debug.Log("Gold full. Walk to " + TargetNode.GetCoordinate().x + " - " + TargetNode.GetCoordinate().y);
                 });
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnTargetLost, Behaviours.Walk,
                 () =>
                 {
-                    Vector2 position = transform.position;
-                    Node<Vector2> target = Voronoi.GetMineCloser(GameManager.Graph.CoordNodes.Find(nodeVoronoi => nodeVoronoi.GetCoordinate() == position));
-                    TargetNode = Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType.Find(node => node.GetCoordinate() == target.GetCoordinate());
+                    TargetNode = GetTarget();
+
                     Debug.Log("Mine empty. Walk to " + TargetNode.GetCoordinate().x + " - " + TargetNode.GetCoordinate().y);
                 });
+        }
+
+        protected override object[] GatherTickParameters()
+        {
+            return new object[] { Retreat, Food, CurrentGold, GoldLimit, onMine, CurrentNode };
+        }
+
+        protected object[] GatherEnterParameters()
+        {
+            return new object[] { OnReachMine, CurrentNode };
+        }
+
+        protected object[] GatherLeaveParameters()
+        {
+            return new object[] { OnLeaveMine, CurrentNode };
         }
 
         protected override void WalkTransitions()
         {
             base.WalkTransitions();
-            Fsm.SetTransition(Behaviours.Walk, Flags.OnGather, Behaviours.GatherResources, () => Debug.Log("Gather gold"));
+            Fsm.SetTransition(Behaviours.Walk, Flags.OnGather, Behaviours.GatherResources,
+                () => Debug.Log("Gather gold"));
         }
 
-        protected override object[] GatherTickParameters()
+        private void Mine()
         {
-            return new object[] { false, Food, CurrentGold, GoldLimit, onMine, CurrentNode };
+            if (Food <= 0 || CurrentNode.gold <= 0) return;
+
+            CurrentGold++;
+
+            LastTimeEat++;
+            CurrentNode.gold--;
+            if (CurrentNode.gold <= 0) OnEmptyMine?.Invoke();
+
+            if (LastTimeEat < GoldPerFood) return;
+
+            Food--;
+            LastTimeEat = 0;
+
+            if (Food > 0 || CurrentNode.food <= 0) return;
+
+            Food++;
+            CurrentNode.food--;
         }
     }
 }

@@ -16,14 +16,15 @@ namespace StateMachine.Agents.RTS
         {
             base.Init();
             Fsm.ForceTransition(Behaviours.GatherResources);
-
             onGather += Gather;
             onDeliver += DeliverFood;
         }
+
         private void Gather()
         {
             Food++;
         }
+
         private void DeliverFood()
         {
             if (Food <= 0) return;
@@ -52,17 +53,25 @@ namespace StateMachine.Agents.RTS
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnFull, Behaviours.Walk,
                 () =>
                 {
-                    Vector2 position = transform.position;
-                    Node<Vector2> target = Voronoi.GetMineCloser(GameManager.Graph.CoordNodes.Find((nodeVoronoi => nodeVoronoi.GetCoordinate() == position)));
+                    if (GameManager.MinesWithMiners == null || GameManager.MinesWithMiners[0] == null)
+                    {
+                        Debug.LogError("No mines with miners.");
+                        return;
+                    }
+
+                    Node<Vector2> target = GameManager.MinesWithMiners[0];
+
                     TargetNode = Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType.Find(node => node.GetCoordinate() == target.GetCoordinate());
+
                     Debug.Log("Get Food.");
                 });
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnRetreat, Behaviours.Walk,
                 () =>
                 {
-                    TargetNode = TownCenter;
+                    TargetNode = GetTarget(NodeType.TownCenter);
 
-                    Debug.Log("Retreat. Walk to " + TargetNode.GetCoordinate().x + " - " + TargetNode.GetCoordinate().y);
+                    Debug.Log("Retreat. Walk to " + TargetNode.GetCoordinate().x + " - " +
+                              TargetNode.GetCoordinate().y);
                 });
         }
 
@@ -71,7 +80,8 @@ namespace StateMachine.Agents.RTS
             Fsm.SetTransition(Behaviours.Walk, Flags.OnRetreat, Behaviours.Walk,
                 () =>
                 {
-                    TargetNode = TownCenter;
+                    TargetNode = GetTarget(NodeType.TownCenter);
+
 
                     Debug.Log("Retreat. Walk to " + TargetNode.GetCoordinate().x + " - " +
                               TargetNode.GetCoordinate().y);
@@ -80,26 +90,33 @@ namespace StateMachine.Agents.RTS
             Fsm.SetTransition(Behaviours.Walk, Flags.OnTargetLost, Behaviours.Walk,
                 () =>
                 {
-                    Vector2 position = transform.position;
-                    Node<Vector2> target = Voronoi.GetMineCloser(GameManager.Graph.CoordNodes.Find((nodeVoronoi => nodeVoronoi.GetCoordinate() == position)));
+                    if (GameManager.MinesWithMiners == null || GameManager.MinesWithMiners[0] == null)
+                    {
+                        Debug.LogError("No mines with miners.");
+                        return;
+                    }
+
+                    Node<Vector2> target = GameManager.MinesWithMiners[0];
+
                     TargetNode = Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType.Find(node => node.GetCoordinate() == target.GetCoordinate());
 
                     Debug.Log("Walk to " + TargetNode.GetCoordinate().x + " - " + TargetNode.GetCoordinate().y);
                 });
+
             Fsm.SetTransition(Behaviours.Walk, Flags.OnGather, Behaviours.Deliver,
                 () => Debug.Log("Deliver food"));
             Fsm.SetTransition(Behaviours.Walk, Flags.OnWait, Behaviours.GatherResources,
                 () => Debug.Log("Deliver food"));
         }
 
-        private object[] GetFoodTickParameters()
+        protected override object[] GetFoodTickParameters()
         {
-            return new object[] { Food, FoodLimit, onGather, retreat };
+            return new object[] { Food, FoodLimit, onGather, Retreat };
         }
 
         protected override object[] GatherTickParameters()
         {
-            return new object[] { retreat, Food, CurrentGold, GoldLimit, onGather };
+            return new object[] { Retreat, Food, CurrentGold, GoldLimit, onGather };
         }
 
         protected override void DeliverTransitions()
@@ -108,6 +125,7 @@ namespace StateMachine.Agents.RTS
                 () =>
                 {
                     TargetNode = TownCenter;
+
                     Debug.Log("To town center");
                 });
             Fsm.SetTransition(Behaviours.Deliver, Flags.OnRetreat, Behaviours.Walk,
@@ -115,13 +133,14 @@ namespace StateMachine.Agents.RTS
                 {
                     TargetNode = TownCenter;
 
-                    Debug.Log("Retreat. Walk to " + TargetNode.GetCoordinate().x + " - " + TargetNode.GetCoordinate().y);
+                    Debug.Log("Retreat. Walk to " + TargetNode.GetCoordinate().x + " - " +
+                              TargetNode.GetCoordinate().y);
                 });
         }
 
         private object[] DeliverTickParameters()
         {
-            return new object[] { Food, onDeliver, retreat };
+            return new object[] { Food, onDeliver, Retreat };
         }
     }
 }

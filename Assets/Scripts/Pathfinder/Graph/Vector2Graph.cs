@@ -1,7 +1,6 @@
-﻿using Pathfinder.Graph;
-using UnityEngine;
+﻿using UnityEngine;
 
-namespace Pathfinder
+namespace Pathfinder.Graph
 {
     /// <summary>
     /// Represents a graph specifically for handling 2D Vector data. Inherits from the generic Graph class.

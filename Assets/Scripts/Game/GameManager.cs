@@ -5,6 +5,7 @@ using Pathfinder.Voronoi;
 using StateMachine.Agents.RTS;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
 namespace Game
@@ -26,16 +27,22 @@ namespace Game
         [SerializeField] private int minersQuantity;
         [SerializeField] private int cartsQuantity;
 
+        [Header("Alarm Config")] 
+        [SerializeField] private Button alarmButton;
+
         public static Graph<Node<Vector2>, NodeVoronoi, Vector2> Graph;
+        public static List<Node<Vector2>> MinesWithMiners = new List<Node<Vector2>>();
 
         private Voronoi<NodeVoronoi, Vector2> voronoi;
         private Color color;
         private void Start()
         {
             Miner.OnEmptyMine += RemakeVoronoi;
-            if (!Application.isPlaying)
-                return;
-            
+
+            Miner.OnReachMine += (node) => MinesWithMiners.Add(node);
+            Miner.OnLeaveMine += (node) => MinesWithMiners.Remove(node);
+            alarmButton.onClick.AddListener(Retreat);
+
             color.a = 0.2f;
 
             Graph<Node<Vector2>, NodeVoronoi, Vector2>.OriginPosition = new NodeVoronoi(originPosition);
@@ -78,6 +85,11 @@ namespace Game
             agent2.Voronoi = voronoi;
             agent2.Init();
             voronoi.SetVoronoi(voronoiNodes);
+        }
+
+        private void Retreat()
+        {
+            RTSAgent.Retreat = !RTSAgent.Retreat;
         }
 
         private void RemakeVoronoi()
