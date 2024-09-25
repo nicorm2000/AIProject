@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Game;
 using Pathfinder;
 using Pathfinder.Voronoi;
@@ -155,7 +154,7 @@ namespace StateMachine.Agents.RTS
             return;
         }
 
-        protected virtual object[] GetFoodEnterParameters()
+        protected virtual object[] GetFoodTickParameters()
         {
             object[] objects = { Food, FoodLimit };
             return objects;

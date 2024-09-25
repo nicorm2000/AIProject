@@ -1,3 +1,4 @@
+using System;
 using Game;
 using Pathfinder;
 using StateMachine.States.RTSStates;
@@ -7,16 +8,33 @@ namespace StateMachine.Agents.RTS
 {
     public class Caravan : RTSAgent
     {
+        private Action onGather;
+        private Action onDeliver;
+
         public override void Init()
         {
             base.Init();
             _fsm.ForceTransition(Behaviours.GatherResources);
+
+            onGather += Gather;
+            onDeliver += DeliverFood;
+        }
+        private void Gather()
+        {
+            Food++;
+        }
+        private void DeliverFood()
+        {
+            if (Food <= 0) return;
+
+            Food--;
+            currentNode.food++;
         }
 
         protected override void FsmBehaviours()
         {
             base.FsmBehaviours();
-            _fsm.AddBehaviour<GetFoodState>(Behaviours.GatherResources, GetFoodEnterParameters, GetFoodEnterParameters);
+            _fsm.AddBehaviour<GetFoodState>(Behaviours.GatherResources, GetFoodTickParameters);
             _fsm.AddBehaviour<DeliverFoodState>(Behaviours.Deliver, DeliverTickParameters);
         }
 
@@ -34,9 +52,14 @@ namespace StateMachine.Agents.RTS
                 () =>
                 {
                     Vector2 position = transform.position;
-                    targetNode =
-                        voronoi.GetMineCloser(GameManager.graph.CoordNodes.Find((nodeVoronoi =>
-                            nodeVoronoi.GetCoordinate() == position)));
+                    Node<Vector2> target = voronoi.GetMineCloser(GameManager.graph.CoordNodes.Find((nodeVoronoi => nodeVoronoi.GetCoordinate() == position)));
+                    targetNode = GameManager.graph.NodesType.Find((node => node.GetCoordinate() == target.GetCoordinate()));
+                });
+            _fsm.SetTransition(Behaviours.GatherResources, Flags.OnRetreat, Behaviours.Walk,
+                () =>
+                {
+                    targetNode = townCenter;
+                    Debug.Log("Retreat. Walk to " + targetNode.GetCoordinate().x + " - " + targetNode.GetCoordinate().y);
                 });
         }
 
@@ -53,15 +76,24 @@ namespace StateMachine.Agents.RTS
                 () =>
                 {
                     Vector2 position = transform.position;
-                    targetNode =
-                        voronoi.GetMineCloser(GameManager.graph.CoordNodes.Find((nodeVoronoi =>
-                            nodeVoronoi.GetCoordinate() == position)));
+                    Node<Vector2> target = voronoi.GetMineCloser(GameManager.graph.CoordNodes.Find((nodeVoronoi => nodeVoronoi.GetCoordinate() == position)));
+                    targetNode = GameManager.graph.NodesType.Find((node => node.GetCoordinate() == target.GetCoordinate()));
                     Debug.Log("Walk to " + targetNode.GetCoordinate().x + " - " + targetNode.GetCoordinate().y);
                 });
             _fsm.SetTransition(Behaviours.Walk, Flags.OnGather, Behaviours.Deliver,
                 () => Debug.Log("Deliver food"));
             _fsm.SetTransition(Behaviours.Walk, Flags.OnWait, Behaviours.GatherResources,
                 () => Debug.Log("Deliver food"));
+        }
+
+        private object[] GetFoodTickParameters()
+        {
+            return new object[] { Food, FoodLimit, onGather, retreat };
+        }
+
+        protected override object[] GatherTickParameters()
+        {
+            return new object[] { retreat, Food, _currentGold, GoldLimit, onGather };
         }
 
         protected override void DeliverTransitions()
@@ -72,11 +104,17 @@ namespace StateMachine.Agents.RTS
                     targetNode = townCenter;
                     Debug.Log("To town center");
                 });
+            _fsm.SetTransition(Behaviours.Deliver, Flags.OnRetreat, Behaviours.Walk,
+                () =>
+                {
+                    targetNode = townCenter;
+                    Debug.Log("Retreat. Walk to " + targetNode.GetCoordinate().x + " - " + targetNode.GetCoordinate().y);
+                });
         }
 
         private object[] DeliverTickParameters()
         {
-            return new object[] { Food, currentNode };
+            return new object[] { Food, onDeliver, retreat };
         }
     }
 }

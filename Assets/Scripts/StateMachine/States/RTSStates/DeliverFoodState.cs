@@ -12,19 +12,18 @@ namespace StateMachine.States.RTSStates
         {
             BehaviourActions behaviours = new BehaviourActions();
             int? food = Convert.ToInt32(parameters[0]);
-            Node<Vector2> node = parameters[1] as Node<Vector2>;
+            Action onDeliverFood = parameters[1] as Action;
+            bool retreat = Convert.ToBoolean(parameters[2]);
 
             behaviours.AddMultiThreadableBehaviours(0, () =>
             {
-                if (food <= 0) return;
-
-                food--;
-                node.food++;
+                onDeliverFood?.Invoke();
             });
 
             behaviours.SetTransitionBehaviour(() =>
             {
                 if (food <= 0) OnFlag?.Invoke(RTSAgent.Flags.OnHunger);
+                if (retreat) OnFlag?.Invoke(RTSAgent.Flags.OnRetreat);
             });
 
             return behaviours;
