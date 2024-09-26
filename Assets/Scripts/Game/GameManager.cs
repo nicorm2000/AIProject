@@ -10,6 +10,8 @@ using Random = UnityEngine.Random;
 
 namespace Game
 {
+    using GraphType = Graph<Node<Vector2>, NodeVoronoi, Vector2>;
+
     public class GameManager : MonoBehaviour
     {
         [Header("Map Config")]
@@ -31,10 +33,11 @@ namespace Game
         [SerializeField] private int minersQuantity;
         [SerializeField] private int caravansQuantity;
 
-        [Header("Alarm Config")]
+        [Header("UI Config")]
         [SerializeField] private Button alarmButton;
+        [SerializeField] private Button goldmineButton;
 
-        public static Graph<Node<Vector2>, NodeVoronoi, Vector2> Graph;
+        public static GraphType Graph;
         public static List<Node<Vector2>> MinesWithMiners = new List<Node<Vector2>>();
         public static AStarPathfinder<Node<Vector2>, Vector2, NodeVoronoi> Pathfinder;
 
@@ -43,6 +46,9 @@ namespace Game
 
         private List<GameObject> visuals = new List<GameObject>();
         private bool updateVisuals = false;
+
+        private int towncenterNode;
+        private Vector3 townCenterPosition;
 
         /// <summary>
         /// Initializes the game state, sets up the mines, units, and visual representation of the map.
@@ -54,18 +60,15 @@ namespace Game
             Miner.OnLeaveMine += OnLeaveMine;
 
             alarmButton.onClick.AddListener(Retreat);
+            goldmineButton.onClick.AddListener(() =>
+            {
+                CreateMines();
+                RemakeVoronoi();
+            });
             color.a = 0.2f;
-            Graph<Node<Vector2>, NodeVoronoi, Vector2>.OriginPosition = new NodeVoronoi(originPosition);
 
-            Graph = new Vector2Graph(mapWidth, mapHeight, nodesSize);
-            voronoi = new Voronoi<NodeVoronoi, Vector2>();
-
-            AmountSafeChecks();
-            SetupObstacles();
-
-            int towncenterNode = CreateMines(out var townCenterPosition);
-            Pathfinder = new AStarPathfinder<Node<Vector2>, Vector2, NodeVoronoi>(Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType);
-            VoronoiSetup();
+            GraphType.OriginPosition = new NodeVoronoi(originPosition);
+            MakeMap();
 
             for (int i = 0; i < minersQuantity; i++)
             {
@@ -91,6 +94,20 @@ namespace Game
 
                 updateVisuals = false;
             }
+        }
+
+        private void MakeMap()
+        {
+            Graph = new Vector2Graph(mapWidth, mapHeight, nodesSize);
+            voronoi = new Voronoi<NodeVoronoi, Vector2>();
+
+            AmountSafeChecks();
+            SetupObstacles();
+            CreateMines();
+
+            towncenterNode = CreateTowncenter(out townCenterPosition);
+            Pathfinder = new AStarPathfinder<Node<Vector2>, Vector2, NodeVoronoi>(GraphType.NodesType);
+            VoronoiSetup();
         }
 
         /// <summary>
@@ -130,21 +147,21 @@ namespace Game
             {
                 if (Random.Range(0, 100) < 10)
                 {
-                    Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType[i].NodeType = NodeType.Forest;
+                    GraphType.NodesType[i].NodeType = NodeType.Forest;
                 }
             }
             for (int i = 0; i < Graph.CoordNodes.Count; i++)
             {
                 if (Random.Range(0, 100) < 10)
                 {
-                    Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType[i].NodeType = NodeType.TreeCutDown;
+                    GraphType.NodesType[i].NodeType = NodeType.TreeCutDown;
                 }
             }
             for (int i = 0; i < Graph.CoordNodes.Count; i++)
             {
                 if (Random.Range(0, 100) < 10)
                 {
-                    Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType[i].NodeType = NodeType.Dirt;
+                    GraphType.NodesType[i].NodeType = NodeType.Dirt;
                 }
             }
         }
@@ -156,7 +173,7 @@ namespace Game
         {
             List<NodeVoronoi> voronoiNodes = new List<NodeVoronoi>();
 
-            foreach (var t in Graph<Node<Vector2>, NodeVoronoi, Vector2>.mines)
+            foreach (var t in GraphType.mines)
             {
                 voronoiNodes.Add(Graph.CoordNodes.Find((node => node.GetCoordinate() == t.GetCoordinate())));
             }
@@ -168,22 +185,26 @@ namespace Game
         /// <summary>
         /// Creates mines on the graph and determines the position of the town center.
         /// </summary>
-        /// <param name="townCenterPosition">Outputs the position of the town center.</param>
-        /// <returns>The index of the town center node.</returns>
-        private int CreateMines(out Vector3 townCenterPosition)
+        private void CreateMines()
         {
             for (int i = 0; i < minesQuantity; i++)
             {
                 int rand = Random.Range(0, Graph.CoordNodes.Count);
-                if (Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType[rand].NodeType == NodeType.Mine) continue;
-                Node<Vector2> node = Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType[rand];
+                if (GraphType.NodesType[rand].NodeType == NodeType.Mine || GraphType.NodesType[rand].NodeType == NodeType.TownCenter) continue;
+                Node<Vector2> node = GraphType.NodesType[rand];
                 node.NodeType = NodeType.Mine;
                 node.gold = 100;
-                Graph<Node<Vector2>, NodeVoronoi, Vector2>.mines.Add(node);
+                GraphType.mines.Add(node);
             }
+        }
 
+        /// <summary>
+        /// Creates town center on the graph.
+        /// </summary>
+        private int CreateTowncenter(out Vector3 townCenterPosition)
+        {
             int towncenterNode = Random.Range(0, Graph.CoordNodes.Count);
-            Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType[towncenterNode].NodeType = NodeType.TownCenter;
+            GraphType.NodesType[towncenterNode].NodeType = NodeType.TownCenter;
             townCenterPosition = new Vector3(Graph.CoordNodes[towncenterNode].GetCoordinate().x, Graph.CoordNodes[towncenterNode].GetCoordinate().y);
             return towncenterNode;
         }
@@ -208,7 +229,7 @@ namespace Game
         {
             GameObject caravan = Instantiate(caravanPrefab, townCenterPosition, Quaternion.identity);
             Caravan agent2 = caravan.GetComponent<Caravan>();
-            agent2.CurrentNode = Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType[towncenterNode];
+            agent2.CurrentNode = GraphType.NodesType[towncenterNode];
             agent2.Voronoi = voronoi;
             agent2.Init();
         }
@@ -222,8 +243,8 @@ namespace Game
         {
             GameObject miner = Instantiate(minerPrefab, townCenterPosition, Quaternion.identity);
             Miner agent = miner.GetComponent<Miner>();
-            agent.CurrentNode = Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType[towncenterNode];
-            RTSAgent.TownCenter = Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType[towncenterNode];
+            agent.CurrentNode = GraphType.NodesType[towncenterNode];
+            RTSAgent.TownCenter = GraphType.NodesType[towncenterNode];
             agent.Voronoi = voronoi;
             agent.Init();
         }
@@ -242,11 +263,11 @@ namespace Game
         private void RemakeVoronoi()
         {
             List<NodeVoronoi> voronoiNodes = new List<NodeVoronoi>();
-            Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType.ForEach(node =>
+            GraphType.NodesType.ForEach(node =>
             {
                 if (node.NodeType == NodeType.Mine && node.gold <= 0) node.NodeType = NodeType.Empty;
             });
-            foreach (var mine in Graph<Node<Vector2>, NodeVoronoi, Vector2>.mines)
+            foreach (var mine in GraphType.mines)
             {
                 if (mine.gold > 0) voronoiNodes.Add(Graph.CoordNodes.Find(node => node.GetCoordinate() == mine.GetCoordinate()));
             }
@@ -267,7 +288,7 @@ namespace Game
 
             visuals.Clear();
 
-            foreach (var node in Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType)
+            foreach (var node in GraphType.NodesType)
             {
                 GameObject gameObject = null;
 

@@ -6,16 +6,6 @@ using StateMachine.Agents.RTS;
 namespace Pathfinder
 {
     /// <summary>
-    /// Struct representing a transition from one node to another, along with the cost of the transition.
-    /// </summary>
-    /// <typeparam name="NodeType">The type of node used in the graph.</typeparam>
-    public struct Transition<NodeType>
-    {
-        public NodeType to;
-        public int cost;
-    }
-
-    /// <summary>
     /// Abstract base class for a generic pathfinding algorithm, which implements a pathfinding process similar to A*.
     /// </summary>
     /// <typeparam name="TNodeType">The type of the node in the graph.</typeparam>
@@ -50,8 +40,8 @@ namespace Pathfinder
 
             TCoordinate startCoor = new TCoordinate();
             startCoor.SetCoordinate(startNode.GetCoordinate());
-            List<TNodeType> openList = new List<TNodeType>(); // Nodes to explore
-            List<TNodeType> closedList = new List<TNodeType>(); // Nodes already explored
+            List<TNodeType> openList = new List<TNodeType>();
+            List<TNodeType> closedList = new List<TNodeType>();
 
             openList.Add(startNode);
 
