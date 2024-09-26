@@ -81,13 +81,10 @@ namespace StateMachine.Agents.RTS
                         Debug.LogError("No mines with miners.");
                         return;
                     }
-
                     Node<Vector2> target = GameManager.MinesWithMiners[0];
                     if (target == null) return;
-
                     TargetNode = Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType.Find(node => node.GetCoordinate() == target.GetCoordinate());
                     if (TargetNode == null) return;
-
                     Debug.Log("Get Food.");
                 });
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnRetreat, Behaviours.Walk,
@@ -95,7 +92,6 @@ namespace StateMachine.Agents.RTS
                 {
                     TargetNode = GetTarget(NodeType.TownCenter);
                     if (TargetNode == null) return;
-
                     Debug.Log("Retreat. Walk to " + TargetNode.GetCoordinate().x + " - " + TargetNode.GetCoordinate().y);
                 });
         }
@@ -110,11 +106,8 @@ namespace StateMachine.Agents.RTS
                 {
                     TargetNode = GetTarget(NodeType.TownCenter);
                     if (TargetNode == null) return;
-
-
                     Debug.Log("Retreat. Walk to " + TargetNode.GetCoordinate().x + " - " + TargetNode.GetCoordinate().y);
                 });
-
             Fsm.SetTransition(Behaviours.Walk, Flags.OnTargetLost, Behaviours.Walk,
                 () =>
                 {
@@ -125,17 +118,12 @@ namespace StateMachine.Agents.RTS
                     }
                     Node<Vector2> target = GameManager.MinesWithMiners[0];
                     if (target == null) return;
-
                     TargetNode = Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType.Find(node => node.GetCoordinate() == target.GetCoordinate());
                     if (TargetNode == null) return;
-
                     Debug.Log("Walk to " + TargetNode.GetCoordinate().x + " - " + TargetNode.GetCoordinate().y);
                 });
-
-            Fsm.SetTransition(Behaviours.Walk, Flags.OnGather, Behaviours.Deliver,
-                () => Debug.Log("Deliver food"));
-            Fsm.SetTransition(Behaviours.Walk, Flags.OnWait, Behaviours.GatherResources,
-                () => Debug.Log("Deliver food"));
+            Fsm.SetTransition(Behaviours.Walk, Flags.OnGather, Behaviours.Deliver, () => Debug.Log("Deliver food"));
+            Fsm.SetTransition(Behaviours.Walk, Flags.OnWait, Behaviours.GatherResources, () => Debug.Log("Deliver food"));
         }
 
         /// <summary>
@@ -166,7 +154,6 @@ namespace StateMachine.Agents.RTS
                 {
                     TargetNode = TownCenter;
                     if (TargetNode == null) return;
-
                     Debug.Log("To town center");
                 });
             Fsm.SetTransition(Behaviours.Deliver, Flags.OnRetreat, Behaviours.Walk,
@@ -174,7 +161,6 @@ namespace StateMachine.Agents.RTS
                 {
                     TargetNode = TownCenter;
                     if (TargetNode == null) return;
-
                     Debug.Log("Retreat. Walk to " + TargetNode.GetCoordinate().x + " - " + TargetNode.GetCoordinate().y);
                 });
         }

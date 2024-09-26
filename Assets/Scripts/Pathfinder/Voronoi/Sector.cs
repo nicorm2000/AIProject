@@ -291,7 +291,7 @@ namespace Pathfinder.Voronoi
                 // Store the X and Y values of the previous point and the current point
                 float previousX = point.GetX();
                 float previousY = point.GetY();
-                point.SetCoordinate(coord.GetCoordinate());
+                point.SetCoordinate(coord.GetCoordinate()); 
 
                 // The operator ^ toggles the value of the bool
                 // Check if "position" crosses a line formed by two consecutive points in the polygon:

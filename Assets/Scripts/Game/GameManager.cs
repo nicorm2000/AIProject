@@ -158,8 +158,7 @@ namespace Game
 
             foreach (var t in Graph<Node<Vector2>, NodeVoronoi, Vector2>.mines)
             {
-                voronoiNodes.Add(Graph.CoordNodes.Find((node =>
-                    node.GetCoordinate() == t.GetCoordinate())));
+                voronoiNodes.Add(Graph.CoordNodes.Find((node => node.GetCoordinate() == t.GetCoordinate())));
             }
 
             voronoi.Init();
@@ -249,8 +248,7 @@ namespace Game
             });
             foreach (var mine in Graph<Node<Vector2>, NodeVoronoi, Vector2>.mines)
             {
-                if (mine.gold > 0)
-                    voronoiNodes.Add(Graph.CoordNodes.Find(node => node.GetCoordinate() == mine.GetCoordinate()));
+                if (mine.gold > 0) voronoiNodes.Add(Graph.CoordNodes.Find(node => node.GetCoordinate() == mine.GetCoordinate()));
             }
 
             voronoi.SetVoronoi(voronoiNodes);
@@ -327,7 +325,7 @@ namespace Game
                     NodeType.Forest => Color.red,
                     _ => Color.white
                 };
-            
+   
                 Gizmos.DrawSphere(new Vector3(node.GetCoordinate().x, node.GetCoordinate().y), nodesSize / 5);
             }
         }

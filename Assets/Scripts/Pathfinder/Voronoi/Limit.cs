@@ -50,8 +50,8 @@ namespace Pathfinder.Voronoi
             // Compute the distance between the given position and the origin of the limit
             TCoordinate distance = new TCoordinate();
             distance.SetCoordinate(
-                Math.Abs(position.GetX() - origin.GetX()) * 2f, // Extend distance on the X-axis
-                Math.Abs(position.GetY() - origin.GetY()) * 2f  // Extend distance on the Y-axis
+                Math.Abs(position.GetX() - origin.GetX()) * 2f,
+                Math.Abs(position.GetY() - origin.GetY()) * 2f 
             );
 
             // Start with the given position as the limit

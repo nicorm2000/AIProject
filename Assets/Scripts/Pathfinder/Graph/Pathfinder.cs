@@ -41,7 +41,7 @@ namespace Pathfinder
         public List<TNodeType> FindPath(TNodeType startNode, TNodeType destinationNode, RTSAgent.AgentTypes agentType)
         {
             Dictionary<TNodeType, (TNodeType Parent, int AcumulativeCost, int Heuristic)> nodes =
-    new Dictionary<TNodeType, (TNodeType Parent, int AcumulativeCost, int Heuristic)>();
+                new Dictionary<TNodeType, (TNodeType Parent, int AcumulativeCost, int Heuristic)>();
 
             foreach (TNodeType node in Graph)
             {
@@ -63,8 +63,7 @@ namespace Pathfinder
                 // Find the node in the open list with the lowest accumulated cost + heuristic
                 for (int i = 1; i < openList.Count; i++)
                 {
-                    if (nodes[openList[i]].AcumulativeCost + nodes[openList[i]].Heuristic >=
-                        nodes[currentNode].AcumulativeCost + nodes[currentNode].Heuristic) continue;
+                    if (nodes[openList[i]].AcumulativeCost + nodes[openList[i]].Heuristic >= nodes[currentNode].AcumulativeCost + nodes[currentNode].Heuristic) continue;
 
                     currentNode = openList[i];
                     currentIndex = i;
@@ -93,8 +92,7 @@ namespace Pathfinder
                     aproxAcumulativeCost += MoveToNeighborCost(currentNode, neighbor, agentType);  // Add movement cost to the neighbor
 
                     // Skip if the neighbor is already in the open list and the cost is not lower
-                    if (openList.Contains(neighbor) && aproxAcumulativeCost >= nodes[neighbor].AcumulativeCost)
-                        continue;
+                    if (openList.Contains(neighbor) && aproxAcumulativeCost >= nodes[neighbor].AcumulativeCost) continue;
 
                     TCoordinate neighborCoor = new TCoordinate();
                     neighborCoor.SetCoordinate(neighbor.GetCoordinate());

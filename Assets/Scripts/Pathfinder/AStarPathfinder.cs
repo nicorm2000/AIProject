@@ -89,7 +89,7 @@ namespace Pathfinder
                     if (B.GetNodeType() == Pathfinder.NodeType.Dirt) cost += 2;
                     break;
                 case RTSAgent.AgentTypes.Caravan:
-                    if (B.GetNodeType() == Pathfinder.NodeType.Dirt) cost += 1;
+                    if (B.GetNodeType() == Pathfinder.NodeType.TreeCutDown) cost += 1;
                     break;
                 default:
                     cost = 0;

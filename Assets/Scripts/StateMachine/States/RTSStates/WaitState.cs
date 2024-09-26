@@ -36,8 +36,7 @@ namespace StateMachine.States.RTSStates
                     return;
                 }
 
-                if (currentNode.NodeType == NodeType.Empty ||
-                    (currentNode.NodeType == NodeType.Mine && currentNode.gold <= 0))
+                if (currentNode.NodeType == NodeType.Empty || (currentNode.NodeType == NodeType.Mine && currentNode.gold <= 0))
                 {
                     OnFlag?.Invoke(RTSAgent.Flags.OnTargetLost);
                     return;

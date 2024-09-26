@@ -52,8 +52,7 @@ namespace StateMachine.Agents.RTS
         protected override void GatherTransitions()
         {
             base.GatherTransitions();
-            Fsm.SetTransition(Behaviours.GatherResources, Flags.OnHunger, Behaviours.Wait,
-                () => Debug.Log("Wait"));
+            Fsm.SetTransition(Behaviours.GatherResources, Flags.OnHunger, Behaviours.Wait, () => Debug.Log("Wait"));
 
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnFull, Behaviours.Walk,
                 () =>
@@ -106,8 +105,7 @@ namespace StateMachine.Agents.RTS
         protected override void WalkTransitions()
         {
             base.WalkTransitions();
-            Fsm.SetTransition(Behaviours.Walk, Flags.OnGather, Behaviours.GatherResources,
-                () => Debug.Log("Gather gold"));
+            Fsm.SetTransition(Behaviours.Walk, Flags.OnGather, Behaviours.GatherResources, () => Debug.Log("Gather gold"));
         }
 
         /// <summary>

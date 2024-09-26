@@ -300,15 +300,13 @@ namespace StateMachine.Agents.RTS
             switch (nodeType)
             {
                 case NodeType.Mine:
-                    target = Voronoi.GetMineCloser(GameManager.Graph.CoordNodes.Find(nodeVoronoi =>
-                        nodeVoronoi.GetCoordinate() == position));
+                    target = Voronoi.GetMineCloser(GameManager.Graph.CoordNodes.Find(nodeVoronoi => nodeVoronoi.GetCoordinate() == position));
                     break;
                 case NodeType.TownCenter:
                     target = TownCenter;
                     break;
                 default:
-                    target = Voronoi.GetMineCloser(GameManager.Graph.CoordNodes.Find(nodeVoronoi =>
-                        nodeVoronoi.GetCoordinate() == position));
+                    target = Voronoi.GetMineCloser(GameManager.Graph.CoordNodes.Find(nodeVoronoi => nodeVoronoi.GetCoordinate() == position));
                     break;
             }
 
