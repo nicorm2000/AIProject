@@ -78,7 +78,7 @@ namespace StateMachine.Agents.RTS
                 {
                     if (GameManager.MinesWithMiners == null || GameManager.MinesWithMiners.Count <= 0)
                     {
-                        Debug.LogError("No mines with miners.");
+                        Debug.LogWarning("No mines with miners.");
                         return;
                     }
                     Node<Vector2> target = GameManager.MinesWithMiners[0];
@@ -113,7 +113,7 @@ namespace StateMachine.Agents.RTS
                 {
                     if (GameManager.MinesWithMiners == null || GameManager.MinesWithMiners.Count <= 0)
                     {
-                        Debug.LogError("No mines with miners.");
+                        Debug.LogWarning("No mines with miners.");
                         return;
                     }
                     Node<Vector2> target = GameManager.MinesWithMiners[0];

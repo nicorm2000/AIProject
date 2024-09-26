@@ -17,7 +17,6 @@ namespace Pathfinder.Voronoi
     {
         private readonly List<Segment<TCoordinate, TCoordinateType>> segments = new();
         private readonly List<TCoordinate> intersections = new();
-        private List<Node<TCoordinate>> nodesInsideSector = new();
         private List<TCoordinate> points;
         private static TCoordinate _wrongPoint;
 

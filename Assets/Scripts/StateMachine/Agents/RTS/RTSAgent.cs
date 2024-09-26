@@ -312,7 +312,7 @@ namespace StateMachine.Agents.RTS
 
             if (target == null)
             {
-                Debug.LogError("No mines with gold.");
+                Debug.LogWarning("No mines with gold.");
                 return null;
             }
 

@@ -41,6 +41,7 @@ namespace Game
         public static List<Node<Vector2>> MinesWithMiners = new List<Node<Vector2>>();
         public static AStarPathfinder<Node<Vector2>, Vector2, NodeVoronoi> Pathfinder;
 
+        private const int MaxMines = 4;
         private Voronoi<NodeVoronoi, Vector2> voronoi;
         private Color color;
 
@@ -91,7 +92,6 @@ namespace Game
             if (updateVisuals)
             {
                 AddVisuals();
-
                 updateVisuals = false;
             }
         }
@@ -133,7 +133,7 @@ namespace Game
         /// <summary>
         /// Removes empty nodes from the list of mines with miners.
         /// </summary>
-        public void RemoveEmptyNodes()
+        private void RemoveEmptyNodes()
         {
             MinesWithMiners.RemoveAll(node => node.NodeType == NodeType.Empty);
         }
@@ -171,6 +171,8 @@ namespace Game
         /// </summary>
         private void VoronoiSetup()
         {
+            AmountSafeChecks();
+
             List<NodeVoronoi> voronoiNodes = new List<NodeVoronoi>();
 
             foreach (var t in GraphType.mines)
@@ -187,6 +189,8 @@ namespace Game
         /// </summary>
         private void CreateMines()
         {
+            if (GraphType.mines.Count > (mapWidth + mapHeight) / MaxMines) return;
+
             for (int i = 0; i < minesQuantity; i++)
             {
                 int rand = Random.Range(0, Graph.CoordNodes.Count);
@@ -214,10 +218,11 @@ namespace Game
         /// </summary>
         private void AmountSafeChecks()
         {
-            if (minesQuantity <= 0) minesQuantity = 1;
-            if (minesQuantity > Graph.CoordNodes.Count) minesQuantity = Graph.CoordNodes.Count;
-            if (minersQuantity <= 0) minersQuantity = 1;
-            if (caravansQuantity <= 0) caravansQuantity = 1;
+            const int Min = 0;
+            if (minesQuantity <= Min) minesQuantity = Min;
+            if (minesQuantity > (mapWidth + mapHeight) / MaxMines) minesQuantity = (mapWidth + mapHeight) / MaxMines;
+            if (minersQuantity <= Min) minersQuantity = Min;
+            if (caravansQuantity <= Min) caravansQuantity = Min;
         }
 
         /// <summary>
@@ -267,6 +272,9 @@ namespace Game
             {
                 if (node.NodeType == NodeType.Mine && node.gold <= 0) node.NodeType = NodeType.Empty;
             });
+
+            GraphType.mines.RemoveAll(node => node.gold <= 0);
+
             foreach (var mine in GraphType.mines)
             {
                 if (mine.gold > 0) voronoiNodes.Add(Graph.CoordNodes.Find(node => node.GetCoordinate() == mine.GetCoordinate()));
