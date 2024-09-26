@@ -8,6 +8,11 @@ namespace StateMachine.States.RTSStates
 {
     public class WaitState : State
     {
+        /// <summary>
+        /// Gets the tick behaviour for the wait state, determining actions based on current conditions such as food, gold, and node type.
+        /// </summary>
+        /// <param name="parameters">Parameters for the behaviour: retreat flag, current food amount, current gold amount, current node, and wait action.</param>
+        /// <returns>A BehaviourActions object containing the behaviours to execute.</returns>
         public override BehaviourActions GetTickBehaviour(params object[] parameters)
         {
             BehaviourActions behaviours = new BehaviourActions();
@@ -17,7 +22,6 @@ namespace StateMachine.States.RTSStates
             int? gold = Convert.ToInt32(parameters[2]);
             Node<Vector2> currentNode = (Node<Vector2>)parameters[3];
             Action OnWait = parameters[4] as Action;
-
 
             behaviours.AddMultiThreadableBehaviours(0, () => { OnWait?.Invoke(); });
 
@@ -55,6 +59,11 @@ namespace StateMachine.States.RTSStates
             return behaviours;
         }
 
+        /// <summary>
+        /// Gets the on enter behaviour for the wait state, invoking actions when reaching a mine.
+        /// </summary>
+        /// <param name="parameters">Parameters for the behaviour: current node and action to invoke upon reaching the mine.</param>
+        /// <returns>A BehaviourActions object containing the behaviours to execute.</returns>
         public override BehaviourActions GetOnEnterBehaviour(params object[] parameters)
         {
             BehaviourActions behaviours = new BehaviourActions();
@@ -70,6 +79,11 @@ namespace StateMachine.States.RTSStates
             return behaviours;
         }
 
+        /// <summary>
+        /// Gets the on exit behaviour for the wait state, invoking actions when leaving a mine.
+        /// </summary>
+        /// <param name="parameters">Parameters for the behaviour: current node and action to invoke upon leaving the mine.</param>
+        /// <returns>A BehaviourActions object containing the behaviours to execute.</returns>
         public override BehaviourActions GetOnExitBehaviour(params object[] parameters)
         {
             BehaviourActions behaviours = new BehaviourActions();

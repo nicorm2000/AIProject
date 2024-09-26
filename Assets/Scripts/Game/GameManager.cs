@@ -44,6 +44,9 @@ namespace Game
         private List<GameObject> visuals = new List<GameObject>();
         private bool updateVisuals = false;
 
+        /// <summary>
+        /// Initializes the game state, sets up the mines, units, and visual representation of the map.
+        /// </summary>
         private void Start()
         {
             Miner.OnEmptyMine += RemakeVoronoi;
@@ -77,6 +80,9 @@ namespace Game
             AddVisuals();
         }
 
+        /// <summary>
+        /// Updates the visuals in the game each frame if necessary.
+        /// </summary>
         private void Update()
         {
             if (updateVisuals)
@@ -87,21 +93,37 @@ namespace Game
             }
         }
 
+        /// <summary>
+        /// Handles the event when a miner reaches a mine, updating the list of mines with miners.
+        /// </summary>
+        /// <param name="node">The node representing the mine that was reached.</param>
         private void OnReachMine(Node<Vector2> node)
         {
             RemoveEmptyNodes();
             MinesWithMiners.Add(node);
         }
+
+        /// <summary>
+        /// Handles the event when a miner leaves a mine, updating the list of mines with miners.
+        /// </summary>
+        /// <param name="node">The node representing the mine that was left.</param>
         private void OnLeaveMine(Node<Vector2> node)
         {
             MinesWithMiners.Remove(node);
             RemoveEmptyNodes();
         }
+
+        /// <summary>
+        /// Removes empty nodes from the list of mines with miners.
+        /// </summary>
         public void RemoveEmptyNodes()
         {
             MinesWithMiners.RemoveAll(node => node.NodeType == NodeType.Empty);
         }
 
+        /// <summary>
+        /// Randomly sets up obstacles (forests, cut down trees, and dirt) in the graph.
+        /// </summary>
         private void SetupObstacles()
         {
             for (int i = 0; i < Graph.CoordNodes.Count; i++)
@@ -127,6 +149,9 @@ namespace Game
             }
         }
 
+        /// <summary>
+        /// Initializes the Voronoi diagram based on the current graph's mines.
+        /// </summary>
         private void VoronoiSetup()
         {
             List<NodeVoronoi> voronoiNodes = new List<NodeVoronoi>();
@@ -141,6 +166,11 @@ namespace Game
             voronoi.SetVoronoi(voronoiNodes);
         }
 
+        /// <summary>
+        /// Creates mines on the graph and determines the position of the town center.
+        /// </summary>
+        /// <param name="townCenterPosition">Outputs the position of the town center.</param>
+        /// <returns>The index of the town center node.</returns>
         private int CreateMines(out Vector3 townCenterPosition)
         {
             for (int i = 0; i < minesQuantity; i++)
@@ -159,6 +189,9 @@ namespace Game
             return towncenterNode;
         }
 
+        /// <summary>
+        /// Ensures that the quantities of mines, miners, and caravans are within valid ranges.
+        /// </summary>
         private void AmountSafeChecks()
         {
             if (minesQuantity <= 0) minesQuantity = 1;
@@ -167,6 +200,11 @@ namespace Game
             if (caravansQuantity <= 0) caravansQuantity = 1;
         }
 
+        /// <summary>
+        /// Creates a caravan unit at the specified town center position.
+        /// </summary>
+        /// <param name="townCenterPosition">The position where the caravan will be created.</param>
+        /// <param name="towncenterNode">The index of the town center node.</param>
         private void CreateCaravan(Vector3 townCenterPosition, int towncenterNode)
         {
             GameObject caravan = Instantiate(caravanPrefab, townCenterPosition, Quaternion.identity);
@@ -176,6 +214,11 @@ namespace Game
             agent2.Init();
         }
 
+        /// <summary>
+        /// Creates a miner unit at the specified town center position.
+        /// </summary>
+        /// <param name="townCenterPosition">The position where the miner will be created.</param>
+        /// <param name="towncenterNode">The index of the town center node.</param>
         private void CreateMiner(Vector3 townCenterPosition, int towncenterNode)
         {
             GameObject miner = Instantiate(minerPrefab, townCenterPosition, Quaternion.identity);
@@ -186,11 +229,17 @@ namespace Game
             agent.Init();
         }
 
+        /// <summary>
+        /// Makes the miners and caravans retreat to their base when triggered.
+        /// </summary>
         private void Retreat()
         {
             RTSAgent.Retreat = !RTSAgent.Retreat;
         }
 
+        /// <summary>
+        /// Remakes the Voronoi diagram when necessary.
+        /// </summary>
         private void RemakeVoronoi()
         {
             List<NodeVoronoi> voronoiNodes = new List<NodeVoronoi>();
@@ -208,6 +257,9 @@ namespace Game
             updateVisuals = true;
         }
 
+        /// <summary>
+        /// Instantiates visual representations of the mines, units, and the environment.
+        /// </summary>
         private void AddVisuals()
         {
             for (int i = 0; i < visuals.Count; i++)

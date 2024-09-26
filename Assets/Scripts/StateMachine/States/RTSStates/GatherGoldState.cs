@@ -8,6 +8,11 @@ namespace StateMachine.States.RTSStates
 {
     public class GatherGoldState : State
     {
+        /// <summary>
+        /// Gets the tick behaviour for the state, including actions for gathering gold and potential transitions based on game conditions.
+        /// </summary>
+        /// <param name="parameters">Parameters for the behaviour: retreat flag, food amount, gold amount, gold limit, mine action, and current node.</param>
+        /// <returns>A BehaviourActions object containing the behaviours to execute.</returns>
         public override BehaviourActions GetTickBehaviour(params object[] parameters)
         {
             BehaviourActions behaviours = new BehaviourActions();
@@ -35,6 +40,11 @@ namespace StateMachine.States.RTSStates
             return behaviours;
         }
 
+        /// <summary>
+        /// Gets the on enter behaviour for the state, including actions to perform when reaching a mining location.
+        /// </summary>
+        /// <param name="parameters">Parameters for the behaviour: on reach action and current node.</param>
+        /// <returns>A BehaviourActions object representing the on enter behaviour.</returns>
         public override BehaviourActions GetOnEnterBehaviour(params object[] parameters)
         {
             BehaviourActions behaviours = new BehaviourActions();
@@ -50,6 +60,11 @@ namespace StateMachine.States.RTSStates
             return behaviours;
         }
 
+        /// <summary>
+        /// Gets the on exit behaviour for the state, including actions to perform when leaving a mining location.
+        /// </summary>
+        /// <param name="parameters">Parameters for the behaviour: on leave action and current node.</param>
+        /// <returns>A BehaviourActions object representing the on exit behaviour.</returns>
         public override BehaviourActions GetOnExitBehaviour(params object[] parameters)
         {
             BehaviourActions behaviours = new BehaviourActions();
