@@ -140,7 +140,7 @@ namespace StateMachine.Agents.RTS
             Fsm.SetTransition(Behaviours.Walk, Flags.OnTargetLost, Behaviours.Walk,
                 () =>
                 {
-                    TargetNode = GetTarget(NodeType.TownCenter);
+                    TargetNode = GetTarget(NodeType.Mine);
                         if (TargetNode == null) return;
 
                     Debug.Log("Walk to " + TargetNode.GetCoordinate().x + " - " + TargetNode.GetCoordinate().y);

@@ -62,7 +62,7 @@ namespace StateMachine.States.RTSStates
                     case NodeType.Empty:
                         OnFlag?.Invoke(RTSAgent.Flags.OnTargetLost);
                         break;
-                    case NodeType.Blocked:
+                    case NodeType.Forest:
                     default:
                         throw new ArgumentOutOfRangeException();
                 }

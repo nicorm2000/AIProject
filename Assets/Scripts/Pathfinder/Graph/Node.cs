@@ -9,11 +9,11 @@ namespace Pathfinder
     public enum NodeType
     {
         Empty,
-        Blocked,
+        Forest,
         Mine,
         TownCenter,
-        Forest,
-        Gravel
+        TreeCutDown,
+        Dirt
     }
 
     /// <summary>
@@ -56,7 +56,7 @@ namespace Pathfinder
         /// <returns>True if the node is blocked; otherwise, false.</returns>
         public bool IsBlocked()
         {
-            return NodeType == NodeType.Blocked;
+            return NodeType == NodeType.Forest;
         }
 
         /// <summary>

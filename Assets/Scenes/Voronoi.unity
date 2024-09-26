@@ -167,9 +167,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ea23d70321c643cd916ab6794d4e7f34, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mapWidth: 40
-  mapHeight: 40
-  minesQuantity: 5
+  mapWidth: 10
+  mapHeight: 10
+  minesQuantity: 3
   nodesSize: 1
   originPosition: {x: -0.5, y: -0.5}
   minerPrefab: {fileID: 2785322424147078408, guid: 40cb8ae62e1a2ed4e857f1bc1d348a61, type: 3}
@@ -178,7 +178,7 @@ MonoBehaviour:
   townCenterPrefab: {fileID: 2011619848210902356, guid: f5cfd40e3850b6b40bbe2da775a166ed, type: 3}
   grassPrefab: {fileID: 6078024256796812795, guid: 2387081e86968134ba0a2e7ed7cd2efc, type: 3}
   forestPrefab: {fileID: 3578413258240903277, guid: b430c8e094dddd34a8712408bc31fed6, type: 3}
-  gravelPrefab: {fileID: 5285623229498443562, guid: 62c60dc821d53bb49b6ecb328024050a, type: 3}
+  dirtPrefab: {fileID: 5285623229498443562, guid: 62c60dc821d53bb49b6ecb328024050a, type: 3}
   treeCutDownPrefab: {fileID: 2120631097958094928, guid: 5f3bf03c2ed57e94fa90518439e97f56, type: 3}
   minersQuantity: 1
   caravansQuantity: 1

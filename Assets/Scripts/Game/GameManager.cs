@@ -26,7 +26,7 @@ namespace Game
         [SerializeField] private GameObject townCenterPrefab;
         [SerializeField] private GameObject grassPrefab;
         [SerializeField] private GameObject forestPrefab;
-        [SerializeField] private GameObject gravelPrefab;
+        [SerializeField] private GameObject dirtPrefab;
         [SerializeField] private GameObject treeCutDownPrefab;
         [SerializeField] private int minersQuantity;
         [SerializeField] private int caravansQuantity;
@@ -41,6 +41,9 @@ namespace Game
         private Voronoi<NodeVoronoi, Vector2> voronoi;
         private Color color;
 
+        private List<GameObject> visuals = new List<GameObject>();
+        private bool updateVisuals = false;
+
         private void Start()
         {
             Miner.OnEmptyMine += RemakeVoronoi;
@@ -48,9 +51,7 @@ namespace Game
             Miner.OnLeaveMine += OnLeaveMine;
 
             alarmButton.onClick.AddListener(Retreat);
-
             color.a = 0.2f;
-
             Graph<Node<Vector2>, NodeVoronoi, Vector2>.OriginPosition = new NodeVoronoi(originPosition);
 
             Graph = new Vector2Graph(mapWidth, mapHeight, nodesSize);
@@ -60,9 +61,7 @@ namespace Game
             SetupObstacles();
 
             int towncenterNode = CreateMines(out var townCenterPosition);
-
             Pathfinder = new AStarPathfinder<Node<Vector2>, Vector2, NodeVoronoi>(Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType);
-
             VoronoiSetup();
 
             for (int i = 0; i < minersQuantity; i++)
@@ -73,6 +72,18 @@ namespace Game
             for (int i = 0; i < caravansQuantity; i++)
             {
                 CreateCaravan(townCenterPosition, towncenterNode);
+            }
+
+            AddVisuals();
+        }
+
+        private void Update()
+        {
+            if (updateVisuals)
+            {
+                AddVisuals();
+
+                updateVisuals = false;
             }
         }
 
@@ -97,13 +108,6 @@ namespace Game
             {
                 if (Random.Range(0, 100) < 10)
                 {
-                    Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType[i].NodeType = NodeType.Blocked;
-                }
-            }
-            for (int i = 0; i < Graph.CoordNodes.Count; i++)
-            {
-                if (Random.Range(0, 100) < 10)
-                {
                     Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType[i].NodeType = NodeType.Forest;
                 }
             }
@@ -111,7 +115,14 @@ namespace Game
             {
                 if (Random.Range(0, 100) < 10)
                 {
-                    Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType[i].NodeType = NodeType.Gravel;
+                    Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType[i].NodeType = NodeType.TreeCutDown;
+                }
+            }
+            for (int i = 0; i < Graph.CoordNodes.Count; i++)
+            {
+                if (Random.Range(0, 100) < 10)
+                {
+                    Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType[i].NodeType = NodeType.Dirt;
                 }
             }
         }
@@ -143,11 +154,8 @@ namespace Game
             }
 
             int towncenterNode = Random.Range(0, Graph.CoordNodes.Count);
-
             Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType[towncenterNode].NodeType = NodeType.TownCenter;
-
-            townCenterPosition = new Vector3(Graph.CoordNodes[towncenterNode].GetCoordinate().x,
-                Graph.CoordNodes[towncenterNode].GetCoordinate().y);
+            townCenterPosition = new Vector3(Graph.CoordNodes[towncenterNode].GetCoordinate().x, Graph.CoordNodes[towncenterNode].GetCoordinate().y);
             return towncenterNode;
         }
 
@@ -197,6 +205,46 @@ namespace Game
             }
 
             voronoi.SetVoronoi(voronoiNodes);
+            updateVisuals = true;
+        }
+
+        private void AddVisuals()
+        {
+            for (int i = 0; i < visuals.Count; i++)
+            {
+                Destroy(visuals[i]);
+            }
+
+            visuals.Clear();
+
+            foreach (var node in Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType)
+            {
+                GameObject gameObject = null;
+
+                switch (node.NodeType)
+                {
+                    case NodeType.Empty:
+                        gameObject = grassPrefab;
+                        break;
+                    case NodeType.Forest:
+                        gameObject = forestPrefab;
+                        break;
+                    case NodeType.Mine:
+                        gameObject = goldminePrefab;
+                        break;
+                    case NodeType.TownCenter:
+                        gameObject = townCenterPrefab;
+                        break;
+                    case NodeType.TreeCutDown:
+                        gameObject = treeCutDownPrefab;
+                        break;
+                    case NodeType.Dirt:
+                        gameObject = dirtPrefab;
+                        break;
+                }
+
+                visuals.Add(Instantiate(gameObject, new Vector3(node.GetCoordinate().x, node.GetCoordinate().y, 0), Quaternion.identity));
+            }
         }
 
         private void OnDrawGizmos()
@@ -215,22 +263,21 @@ namespace Game
                 Handles.DrawPolyLine(list.ToArray());
             }
 
-
-            foreach (var node in Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType)
-            {
-                Gizmos.color = node.NodeType switch
-                {
-                    NodeType.Mine => Color.yellow,
-                    NodeType.Empty => Color.white,
-                    NodeType.TownCenter => Color.blue,
-                    NodeType.Forest => Color.green,
-                    NodeType.Gravel => Color.gray,
-                    NodeType.Blocked => Color.red,
-                    _ => Color.white
-                };
-
-                Gizmos.DrawSphere(new Vector3(node.GetCoordinate().x, node.GetCoordinate().y), nodesSize / 5);
-            }
+            //foreach (var node in Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType)
+            //{
+            //    Gizmos.color = node.NodeType switch
+            //    {
+            //        NodeType.Mine => Color.yellow,
+            //        NodeType.Empty => Color.white,
+            //        NodeType.TownCenter => Color.blue,
+            //        NodeType.TreeCutDown => Color.green,
+            //        NodeType.Dirt => Color.gray,
+            //        NodeType.Forest => Color.red,
+            //        _ => Color.white
+            //    };
+            //
+            //    Gizmos.DrawSphere(new Vector3(node.GetCoordinate().x, node.GetCoordinate().y), nodesSize / 5);
+            //}
         }
     }
 }

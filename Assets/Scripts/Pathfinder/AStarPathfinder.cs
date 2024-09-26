@@ -64,7 +64,7 @@ namespace Pathfinder
         /// <returns>True if the node is blocked; otherwise, false.</returns>
         protected override bool IsBlocked(NodeType node)
         {
-            return node.GetNodeType() == Pathfinder.NodeType.Blocked;
+            return node.GetNodeType() == Pathfinder.NodeType.Forest;
         }
 
         /// <summary>
@@ -86,10 +86,10 @@ namespace Pathfinder
             switch (type)
             {
                 case RTSAgent.AgentTypes.Miner:
-                    if (B.GetNodeType() == Pathfinder.NodeType.Gravel) cost += 2;
+                    if (B.GetNodeType() == Pathfinder.NodeType.Dirt) cost += 2;
                     break;
                 case RTSAgent.AgentTypes.Caravan:
-                    if (B.GetNodeType() == Pathfinder.NodeType.Gravel) cost += 1;
+                    if (B.GetNodeType() == Pathfinder.NodeType.Dirt) cost += 1;
                     break;
                 default:
                     cost = 0;
