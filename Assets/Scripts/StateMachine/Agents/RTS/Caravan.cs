@@ -7,11 +7,18 @@ using UnityEngine;
 
 namespace StateMachine.Agents.RTS
 {
+    /// <summary>
+    /// Represents a caravan agent responsible for gathering and delivering food.
+    /// Inherits from RTSAgent and handles FSM (Finite State Machine) behaviors and transitions.
+    /// </summary>
     public class Caravan : RTSAgent
     {
         private Action onGather;
         private Action onDeliver;
 
+        /// <summary>
+        /// Initializes the Caravan agent, setting its type and starting state.
+        /// </summary>
         public override void Init()
         {
             base.Init();
@@ -21,11 +28,17 @@ namespace StateMachine.Agents.RTS
             onDeliver += DeliverFood;
         }
 
+        /// <summary>
+        /// Increases the food resource when called.
+        /// </summary>
         private void Gather()
         {
             Food++;
         }
 
+        /// <summary>
+        /// Delivers food to the current node, decreasing the Caravan's food count.
+        /// </summary>
         private void DeliverFood()
         {
             if (Food <= 0) return;
@@ -34,6 +47,9 @@ namespace StateMachine.Agents.RTS
             CurrentNode.food++;
         }
 
+        /// <summary>
+        /// Configures FSM behaviors for the Caravan (e.g., gathering, delivering).
+        /// </summary>
         protected override void FsmBehaviours()
         {
             base.FsmBehaviours();
@@ -41,6 +57,9 @@ namespace StateMachine.Agents.RTS
             Fsm.AddBehaviour<DeliverFoodState>(Behaviours.Deliver, DeliverTickParameters);
         }
 
+        /// <summary>
+        /// Configures FSM behaviors for the Caravan (e.g., gathering, delivering).
+        /// </summary>
         protected override void FsmTransitions()
         {
             base.FsmTransitions();
@@ -49,6 +68,9 @@ namespace StateMachine.Agents.RTS
             DeliverTransitions();
         }
 
+        /// <summary>
+        /// Configures FSM transitions related to the food gathering behavior.
+        /// </summary>
         protected override void GetFoodTransitions()
         {
             Fsm.SetTransition(Behaviours.GatherResources, Flags.OnFull, Behaviours.Walk,
@@ -78,6 +100,9 @@ namespace StateMachine.Agents.RTS
                 });
         }
 
+        /// <summary>
+        /// Configures FSM transitions related to the walking behavior.
+        /// </summary>
         protected override void WalkTransitions()
         {
             Fsm.SetTransition(Behaviours.Walk, Flags.OnRetreat, Behaviours.Walk,
@@ -113,16 +138,27 @@ namespace StateMachine.Agents.RTS
                 () => Debug.Log("Deliver food"));
         }
 
+        /// <summary>
+        /// Retrieves parameters for the food gathering FSM tick.
+        /// </summary>
+        /// <returns>An array containing the current food state and gathering action.</returns>
         protected override object[] GetFoodTickParameters()
         {
             return new object[] { Food, FoodLimit, onGather, Retreat };
         }
 
+        /// <summary>
+        /// Retrieves parameters for the gathering FSM tick.
+        /// </summary>
+        /// <returns>An array containing parameters related to gathering.</returns>
         protected override object[] GatherTickParameters()
         {
             return new object[] { Retreat, Food, CurrentGold, GoldLimit, onGather };
         }
 
+        /// <summary>
+        /// Configures FSM transitions related to delivering food.
+        /// </summary>
         protected override void DeliverTransitions()
         {
             Fsm.SetTransition(Behaviours.Deliver, Flags.OnHunger, Behaviours.Walk,
@@ -143,6 +179,10 @@ namespace StateMachine.Agents.RTS
                 });
         }
 
+        /// <summary>
+        /// Retrieves parameters for the delivery FSM tick.
+        /// </summary>
+        /// <returns>An array containing parameters for food delivery.</returns>
         private object[] DeliverTickParameters()
         {
             return new object[] { Food, onDeliver, Retreat };

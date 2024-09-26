@@ -315,21 +315,21 @@ namespace Game
                 Handles.DrawPolyLine(list.ToArray());
             }
 
-            //foreach (var node in Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType)
-            //{
-            //    Gizmos.color = node.NodeType switch
-            //    {
-            //        NodeType.Mine => Color.yellow,
-            //        NodeType.Empty => Color.white,
-            //        NodeType.TownCenter => Color.blue,
-            //        NodeType.TreeCutDown => Color.green,
-            //        NodeType.Dirt => Color.gray,
-            //        NodeType.Forest => Color.red,
-            //        _ => Color.white
-            //    };
-            //
-            //    Gizmos.DrawSphere(new Vector3(node.GetCoordinate().x, node.GetCoordinate().y), nodesSize / 5);
-            //}
+            foreach (var node in Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType)
+            {
+                Gizmos.color = node.NodeType switch
+                {
+                    NodeType.Mine => Color.yellow,
+                    NodeType.Empty => Color.white,
+                    NodeType.TownCenter => Color.blue,
+                    NodeType.TreeCutDown => Color.green,
+                    NodeType.Dirt => Color.gray,
+                    NodeType.Forest => Color.red,
+                    _ => Color.white
+                };
+            
+                Gizmos.DrawSphere(new Vector3(node.GetCoordinate().x, node.GetCoordinate().y), nodesSize / 5);
+            }
         }
     }
 }

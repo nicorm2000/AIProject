@@ -57,7 +57,7 @@ namespace Pathfinder.Voronoi
             // 2. Divide by 2 to get the X-coordinate of the mediatrix
             // 3. Repeat the process for the Y-coordinates
             mediatrix = new TCoordinate();
-            mediatrix.SetCoordinate((origin.GetX() + final.GetX()) / 2, (origin.GetY() + final.GetY()) / 2);
+            mediatrix.SetCoordinate((origin.GetX() + final.GetX()) * 0.5f, (origin.GetY() + final.GetY()) * 0.5f);
 
             // Calculate the direction of the segment:
             // 1. Calculate the vector from the origin to the final point

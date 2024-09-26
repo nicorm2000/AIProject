@@ -169,7 +169,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mapWidth: 10
   mapHeight: 10
-  minesQuantity: 3
+  minesQuantity: 5
   nodesSize: 1
   originPosition: {x: -0.5, y: -0.5}
   minerPrefab: {fileID: 2785322424147078408, guid: 40cb8ae62e1a2ed4e857f1bc1d348a61, type: 3}

@@ -177,7 +177,6 @@ namespace Pathfinder.Voronoi
             }
         }
 
-
         /// <summary>
         /// Checks if two floating-point numbers are approximately equal within a small tolerance.
         /// </summary>

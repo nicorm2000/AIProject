@@ -32,10 +32,9 @@ namespace Pathfinder.Voronoi
         /// </summary>
         private void InitLimits()
         {
-            // Calculate the map boundaries using its dimensions, node spacing, and origin point
             TCoordinate mapSize = new TCoordinate();
             mapSize.SetCoordinate(Graph<Node<TCoordinateType>, TCoordinate, TCoordinateType>.MapDimensions.GetCoordinate());
-            mapSize.Multiply(Graph<Node<TCoordinateType>, TCoordinate, TCoordinateType>.CellSize); // Scaling map by cell size
+            mapSize.Multiply(Graph<Node<TCoordinateType>, TCoordinate, TCoordinateType>.CellSize);
             TCoordinate offset = new TCoordinate();
             offset.SetCoordinate(Graph<Node<TCoordinateType>, TCoordinate, TCoordinateType>.OriginPosition.GetCoordinate());
 
