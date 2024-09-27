@@ -23,6 +23,8 @@ namespace StateMachine.Agents.RTS
         {
             base.Init();
             AgentType = AgentTypes.Caravan;
+            nodeThatAffects = NodeType.TreeCutDown;
+            cost = 2;
             Fsm.ForceTransition(Behaviours.GatherResources);
             onGather += Gather;
             onDeliver += DeliverFood;

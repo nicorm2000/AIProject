@@ -48,6 +48,8 @@ namespace StateMachine.Agents.RTS
         protected AStarPathfinder<Node<Vector2>, Vector2, NodeVoronoi> Pathfinder;
         protected List<Node<Vector2>> Path;
         protected AgentTypes AgentType;
+        protected NodeType nodeThatAffects;
+        protected int cost;
         protected Node<Vector2> TargetNode
         {
             get => targetNode;

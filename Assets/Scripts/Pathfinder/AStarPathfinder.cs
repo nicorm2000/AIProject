@@ -15,15 +15,18 @@ namespace Pathfinder
            where CoordinateType : IEquatable<CoordinateType>
            where TCoordinate : ICoordinate<CoordinateType>, new()
     {
+        public delegate int CostCalculator(NodeType currentNode, NodeType neighborNode, RTSAgent.AgentTypes agentType);
+        private readonly CostCalculator _costCalculator;
         /// <summary>
         /// Initializes a new instance of the AStarPathfinder class.
         /// </summary>
         /// <param name="graph">The collection of nodes representing the graph.</param>
         /// <param name="minCost">Minimum cost for a transition.</param>
         /// <param name="maxCost">Maximum cost for a transition.</param>
-        public AStarPathfinder(ICollection<NodeType> graph)
+        public AStarPathfinder(ICollection<NodeType> graph, CostCalculator costCalculator)
         {
             this.Graph = graph;
+            this._costCalculator = costCalculator;
         }
 
         /// <summary>
@@ -81,22 +84,7 @@ namespace Pathfinder
                 throw new InvalidOperationException("B node has to be a neighbor.");
             }
 
-            int cost = 0;
-
-            switch (type)
-            {
-                case RTSAgent.AgentTypes.Miner:
-                    if (B.GetNodeType() == Pathfinder.NodeType.Dirt) cost += 2;
-                    break;
-                case RTSAgent.AgentTypes.Caravan:
-                    if (B.GetNodeType() == Pathfinder.NodeType.TreeCutDown) cost += 2;
-                    break;
-                default:
-                    cost = 0;
-                    break;
-            }
-
-            return cost;
+            return _costCalculator(A, B, type);
         }
 
         /// <summary>

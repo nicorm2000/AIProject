@@ -96,6 +96,33 @@ namespace Game
             }
         }
 
+        private int CalculateMovementCost(Node<Vector2> currentNode, Node<Vector2> neighborNode, RTSAgent.AgentTypes agentType)
+        {
+            int cost = 0;
+
+            switch (agentType)
+            {
+                case RTSAgent.AgentTypes.Miner:
+                    if (neighborNode.GetNodeType() == NodeType.Dirt)
+                        cost += 2;
+                    break;
+
+                case RTSAgent.AgentTypes.Caravan:
+                    if (neighborNode.GetNodeType() == NodeType.TreeCutDown)
+                        cost += 2;
+                    break;
+
+                default:
+                    cost = 0;
+                    break;
+            }
+
+            return cost;
+        }
+
+        /// <summary>
+        /// Create game map by adding the graph, voronoi and making th correct assesments on different sections.
+        /// </summary>
         private void MakeMap()
         {
             Graph = new Vector2Graph(mapWidth, mapHeight, nodesSize);
@@ -106,7 +133,7 @@ namespace Game
             CreateMines();
 
             towncenterNode = CreateTowncenter(out townCenterPosition);
-            Pathfinder = new AStarPathfinder<Node<Vector2>, Vector2, NodeVoronoi>(GraphType.NodesType);
+            Pathfinder = new AStarPathfinder<Node<Vector2>, Vector2, NodeVoronoi>(GraphType.NodesType, CalculateMovementCost);
             VoronoiSetup();
         }
 
@@ -342,21 +369,21 @@ namespace Game
                 Handles.DrawPolyLine(list.ToArray());
             }
 
-            foreach (var node in Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType)
-            {
-                Gizmos.color = node.NodeType switch
-                {
-                    NodeType.Mine => Color.yellow,
-                    NodeType.Empty => Color.white,
-                    NodeType.TownCenter => Color.blue,
-                    NodeType.TreeCutDown => Color.green,
-                    NodeType.Dirt => Color.gray,
-                    NodeType.Forest => Color.red,
-                    _ => Color.white
-                };
-   
-                Gizmos.DrawSphere(new Vector3(node.GetCoordinate().x, node.GetCoordinate().y), nodesSize / 5);
-            }
+            //foreach (var node in Graph<Node<Vector2>, NodeVoronoi, Vector2>.NodesType)
+            //{
+            //    Gizmos.color = node.NodeType switch
+            //    {
+            //        NodeType.Mine => Color.yellow,
+            //        NodeType.Empty => Color.white,
+            //        NodeType.TownCenter => Color.blue,
+            //        NodeType.TreeCutDown => Color.green,
+            //        NodeType.Dirt => Color.gray,
+            //        NodeType.Forest => Color.red,
+            //        _ => Color.white
+            //    };
+            //
+            //    Gizmos.DrawSphere(new Vector3(node.GetCoordinate().x, node.GetCoordinate().y), nodesSize / 5);
+            //}
         }
     }
 }

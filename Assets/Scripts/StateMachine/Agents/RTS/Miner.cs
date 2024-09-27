@@ -23,6 +23,8 @@ namespace StateMachine.Agents.RTS
         {
             base.Init();
             AgentType = AgentTypes.Miner;
+            nodeThatAffects = NodeType.Dirt;
+            cost = 2;
             Fsm.ForceTransition(Behaviours.Walk);
             onMine += Mine;
         }
