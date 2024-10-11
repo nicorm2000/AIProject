@@ -33,10 +33,10 @@ public class CameraFollow : MonoBehaviour
 
         if (PopulationManager.Instance != null)
         {
-            if (PopulationManager.Instance.GetBestAgent() != null)
-                follow = PopulationManager.Instance.GetBestAgent().transform.position;
-            else
-                return;
+            //if (PopulationManager.Instance.GetBestAgent() != null)
+            //    follow = PopulationManager.Instance.GetBestAgent().transform.position;
+            //else
+            //    return;
         }
         else
             follow = agent.transform.position;
