@@ -44,6 +44,48 @@ namespace NeuralNetworkDirectory.AI
             }
         }
 
+        private void HerbivoreFitnessCalculator(uint agentId)
+        {
+            foreach (var brainType in _agents[agentId].brainTypes)
+            {
+                switch (brainType)
+                {
+                    case BrainType.ScavengerMovement:
+                        ScavengerMovementFC(agentId);
+                        break;
+                    case BrainType.Eat:
+                        ScavengerEatFC(agentId);
+                        break;
+                    case BrainType.Flocking:
+                        ScavengerFlockingFC(agentId);
+                        break;
+                    default:
+                        throw new ArgumentException("Herbivore doesn't have a brain type: ", nameof(brainType));
+                }
+            }
+        }
+
+        private void CarnivorousFitnessCalculator(uint agentId)
+        {
+            foreach (var brainType in _agents[agentId].brainTypes)
+            {
+                switch (brainType)
+                {
+                    case BrainType.Attack:
+                        ScavengerMovementFC(agentId);
+                        break;
+                    case BrainType.Eat:
+                        ScavengerEatFC(agentId);
+                        break;
+                    case BrainType.Movement:
+                        ScavengerFlockingFC(agentId);
+                        break;
+                    default:
+                        throw new ArgumentException("Carnivore doesn't have a brain type: ", nameof(brainType));
+                }
+            }
+        }
+
         private void ScavengerFitnessCalculator(uint agentId)
         {
             foreach (var brainType in _agents[agentId].brainTypes)
@@ -170,16 +212,6 @@ namespace NeuralNetworkDirectory.AI
                 // Penalize the agent
                 ECSManager.GetComponent<NeuralNetComponent>(agentId).Punish(punishment, BrainType.ScavengerMovement);
             }
-        }
-
-        private void HerbivoreFitnessCalculator(uint agentId)
-        {
-            throw new NotImplementedException();
-        }
-
-        private void CarnivorousFitnessCalculator(uint agentId)
-        {
-            throw new NotImplementedException();
         }
 
         private bool IsMovingTowardsTarget(uint agentId, Vector2 targetPosition)
