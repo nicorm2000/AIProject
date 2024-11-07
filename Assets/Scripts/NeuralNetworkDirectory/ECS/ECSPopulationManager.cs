@@ -6,6 +6,7 @@ using System.Linq;
 using ECS.Patron;
 using FlappyIa.GeneticAlg;
 using Flocking;
+using NeuralNetworkDirectory.AI;
 using NeuralNetworkDirectory.DataManagement;
 using NeuralNetworkDirectory.NeuralNet;
 using Pathfinder;
@@ -30,7 +31,7 @@ namespace NeuralNetworkDirectory.ECS
         [SerializeField] private float GenerationDuration = 20.0f;
         [SerializeField] private float MutationChance = 0.10f;
         [SerializeField] private float MutationRate = 0.01f;
-        
+
         public static Graph<SimNode<Vector2>, NodeVoronoi, Vector2> graph;
         public int gridWidth = 10;
         public int gridHeight = 10;
@@ -43,9 +44,10 @@ namespace NeuralNetworkDirectory.ECS
         private static Dictionary<uint, SimAgent> _agents;
         private static Dictionary<uint, Scavenger> _scavengers;
         private Dictionary<uint, List<Genome>> population = new();
+        private readonly List<SimAgent> populationGOs = new();
         private GraphManager gridManager;
         private GeneticAlgorithm genAlg;
-        private readonly List<SimAgent> populationGOs = new();
+        private FitnessManager fitnessManager;
 
         public int Generation { get; private set; }
         public float BestFitness { get; private set; }
@@ -58,9 +60,10 @@ namespace NeuralNetworkDirectory.ECS
             ECSManager.Init();
             entities = new Dictionary<uint, GameObject>();
             gridManager = new GraphManager(gridWidth, gridHeight);
-            graph = new Sim2Graph(gridWidth,gridHeight,1);
+            graph = new Sim2Graph(gridWidth, gridHeight, 1);
             StartSimulation();
             InitializePlants();
+            fitnessManager = new FitnessManager(_agents);
         }
 
         private void Update()
@@ -106,6 +109,8 @@ namespace NeuralNetworkDirectory.ECS
 
                 _agents[entity.Key].Tick(Time.deltaTime);
             });
+
+            fitnessManager.Tick();
         }
 
         private void UpdateBoidOffsets(Boid boid, float[] outputs)
@@ -157,9 +162,9 @@ namespace NeuralNetworkDirectory.ECS
             var position = GetRandomPos();
             var go = Instantiate(prefab, position, Quaternion.identity);
             var agent = go.GetComponent<SimAgent>();
-            
+
             if (agentType != SimAgentTypes.Scavenger) return agent;
-            
+
             var sca = (Scavenger)agent;
             sca.boid.Init(flockingManager.Alignment, flockingManager.Cohesion, flockingManager.Separation,
                 flockingManager.Direction);
@@ -202,7 +207,7 @@ namespace NeuralNetworkDirectory.ECS
                 population[entityID] = genomes;
                 populationGOs.Add(agent);
                 agent.Init();
-                if(agentType == SimAgentTypes.Scavenger) _scavengers[entityID] = (Scavenger)agent;
+                if (agentType == SimAgentTypes.Scavenger) _scavengers[entityID] = (Scavenger)agent;
             }
         }
 
@@ -256,7 +261,7 @@ namespace NeuralNetworkDirectory.ECS
             var go = Instantiate(prefab, position.GetCoordinate(), Quaternion.identity);
             var agent = go.GetComponent<SimAgent>();
             agent.CurrentNode = NodeToCoordinate(position);
-            
+
             return agent;
         }
 
@@ -501,7 +506,7 @@ namespace NeuralNetworkDirectory.ECS
             return graph.NodesType
                 .FirstOrDefault(node => node.GetCoordinate().Equals(coordinate.GetCoordinate()));
         }
-        
+
         public static NodeVoronoi NodeToCoordinate(SimNode<Vector2> coordinate)
         {
             return graph.CoordNodes[(int)coordinate.GetCoordinate().x, (int)coordinate.GetCoordinate().y];
@@ -528,7 +533,7 @@ namespace NeuralNetworkDirectory.ECS
         {
             isRunning = !isRunning;
         }
-        
+
         public static List<Boid> GetBoidsInsideRadius(Boid boid)
         {
             List<Boid> insideRadiusBoids = new List<Boid>();
