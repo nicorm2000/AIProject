@@ -1417,8 +1417,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5911a8169cb430d4fa9f3ea03188a0c1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  prefab: {fileID: 7503251877049065454, guid: 8909d7b8482468b4a91f773f1bb86b76, type: 3}
-  prefabCoin: {fileID: 723324322067268274, guid: 6383356e0b8dad149abb591b3f579687, type: 3}
+  obstaclePrefab: {fileID: 7503251877049065454, guid: 8909d7b8482468b4a91f773f1bb86b76, type: 3}
+  coinPrefab: {fileID: 7503251877049065454, guid: dc9bff03cb21f93479d498b360a3303e, type: 3}
 --- !u!4 &1326559231
 Transform:
   m_ObjectHideFlags: 0

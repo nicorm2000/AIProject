@@ -6,52 +6,99 @@ using VoronoiDiagram;
 
 namespace Pathfinder.Voronoi
 {
-    /// <summary>
-    /// Represents a sector defined by segments and intersections.
-    /// </summary>
-    /// <typeparam name="TCoordinate">Type of the coordinate.</typeparam>
-    /// <typeparam name="TCoordinateType">Type of the coordinate value.</typeparam>
     public class Sector<TCoordinate, TCoordinateType>
         where TCoordinate : IEquatable<TCoordinate>, ICoordinate<TCoordinateType>, new()
         where TCoordinateType : IEquatable<TCoordinateType>, new()
     {
-        private readonly List<Segment<TCoordinate, TCoordinateType>> segments = new();
-        private readonly List<TCoordinate> intersections = new();
-        private List<TCoordinate> points;
         private static TCoordinate _wrongPoint;
+        private readonly List<TCoordinate> intersections = new();
+        private readonly List<Segment<TCoordinate, TCoordinateType>> segments = new();
+        private List<TCoordinate> points;
 
-        public Node<TCoordinateType> Mine { get; }
-
-        public Sector(Node<TCoordinateType> mine)
+        public Sector(RTSNode<TCoordinateType> mine)
         {
             _wrongPoint = new TCoordinate();
             _wrongPoint.SetCoordinate(-1, -1);
-            this.Mine = mine;
+            Mine = mine;
+        }
+
+        public RTSNode<TCoordinateType> Mine { get; }
+
+        public bool
+            CheckPointInSector(TCoordinate position) // Calculo si "position" esta dentro de un sector del diagrama
+        {
+            if (points == null) return false;
+
+            var inside = false;
+
+            // Inicializo "point" con el ultimo punto (^1) de la matriz "points"
+            var point = new TCoordinate();
+            point.SetCoordinate(points[^1].GetCoordinate());
+
+            foreach (var coord in points)
+            {
+                // Guardo el valor X e Y del punto anterior y el punto actual
+                var previousX = point.GetX();
+                var previousY = point.GetY();
+                point.SetCoordinate(coord.GetCoordinate());
+
+                // (El operador ^ alterna el valor del bool)
+                // Calculo si "position" cruza o no una línea formada por dos puntos consecutivos en el polígono:
+                // 1. Verifico si "position" esta por debajo de los puntos actual y anterior en el eje vertical (1 sola comparacion es V = V)
+                // 2. Verifico si "position" esta a la izquierda de la linea que conecta los puntos actual y anterior
+                var condition1 = (point.GetY() > position.GetY()) ^ (previousY > position.GetY());
+                var condition2 = position.GetX() - point.GetX() <
+                                 (position.GetY() - point.GetY()) * (previousX - point.GetX()) /
+                                 (previousY - point.GetY());
+
+                // Si ambas condiciones son verdaderas, el punto está fuera del polígono
+                inside ^= condition1 && condition2;
+            }
+
+            return inside;
+        }
+
+        public List<RTSNode<TCoordinate>> GetNodesInSector(List<RTSNode<TCoordinate>> allNodes)
+        {
+            var nodesInSector = new List<RTSNode<TCoordinate>>();
+
+            foreach (var node in allNodes)
+                if (CheckPointInSector(node.GetCoordinate()))
+                    nodesInSector.Add(node);
+
+            return nodesInSector;
+        }
+
+        public int CalculateTotalWeight(List<RTSNode<TCoordinate>> nodesInSector)
+        {
+            var totalWeight = 0;
+
+            foreach (var node in nodesInSector)
+                // TODO totalWeight += node.GetPathNodeCost();
+                totalWeight += 1;
+
+            return totalWeight;
+        }
+
+        public TCoordinate[] PointsToDraw()
+        {
+            return points.ToArray();
         }
 
         #region SEGMENTS
 
-        /// <summary>
-        /// Adds segment limits based on the provided limits to define the boundaries of the sector.
-        /// </summary>
-        /// <param name="limits">A list of limits that define the boundaries.</param>
         public void AddSegmentLimits(List<Limit<TCoordinate, TCoordinateType>> limits)
         {
-            // Calculate segments using the map limits
+            // Calculo los segmentos con los limites del mapa
             foreach (var limit in limits)
             {
-                TCoordinate origin = new TCoordinate();
-                origin.SetCoordinate(Mine.GetCoordinate()); // Get the position of the mine
-                TCoordinate final = limit.GetMapLimitPosition(origin); // Get the final position of the segment
+                var origin = new TCoordinate();
+                origin.SetCoordinate(Mine.GetCoordinate()); // Obtengo la posicion de la mina
+                var final = limit.GetMapLimitPosition(origin); // Obtengo la posicion final del segmento
                 segments.Add(new Segment<TCoordinate, TCoordinateType>(origin, final));
             }
         }
 
-        /// <summary>
-        /// Adds a segment defined by its origin and final coordinates.
-        /// </summary>
-        /// <param name="origin">The starting point of the segment.</param>
-        /// <param name="final">The ending point of the segment.</param>
         public void AddSegment(TCoordinate origin, TCoordinate final)
         {
             segments.Add(new Segment<TCoordinate, TCoordinateType>(origin, final));
@@ -61,104 +108,94 @@ namespace Pathfinder.Voronoi
 
         #region INTERSECTION
 
-        /// <summary>
-        /// Sets the intersections between segments, validating them and determining their positions.
-        /// </summary>
         public void SetIntersections()
         {
             intersections.Clear();
 
-            // Calculate intersections between each segment (excluding itself)
-            for (int i = 0; i < segments.Count; i++)
+            // Calculo las intersecciones entre cada segmento (menos entre si mismo)
+            for (var i = 0; i < segments.Count; i++)
+            for (var j = 0; j < segments.Count; j++)
             {
-                for (int j = 0; j < segments.Count; j++)
+                if (i == j) continue;
+
+                // Obtengo la interseccion
+                var intersectionPoint = GetIntersection(segments[i], segments[j]);
+
+                if (intersectionPoint.Equals(_wrongPoint)) continue;
+
+                // Chequeo si esa interseccion ya existe
+                if (intersections.Contains(intersectionPoint)) continue;
+
+                // Calculo la distancia maxima entre la interseccion y el punto de oriden del segmento
+                var maxDistance = intersectionPoint.Distance(segments[i].Origin.GetCoordinate());
+
+                // Determino si la interseccion es valida
+                var checkValidPoint = false;
+                for (var k = 0; k < segments.Count; k++)
                 {
-                    if (i == j) continue;
-
-                    // Get the intersection point
-                    TCoordinate intersectionPoint = GetIntersection(segments[i], segments[j]);
-
-                    if (intersectionPoint.Equals(_wrongPoint)) continue;
-
-                    // Check if this intersection already exists
-                    if (intersections.Contains(intersectionPoint)) continue;
-
-                    // Calculate the maximum distance between the intersection and the origin point of the segment
-                    float maxDistance = intersectionPoint.Distance(segments[i].Origin.GetCoordinate());
-
-                    // Determine if the intersection is valid
-                    bool checkValidPoint = false;
-                    for (int k = 0; k < segments.Count; k++)
+                    // Recorro todos los segmentos de nuevo para verificar si hay otro
+                    // segmento más cercano a la intersección que el segmento actual
+                    // Esto es porque cada interseccion debe representar un punto donde los dos segmentos son los mas cercanos
+                    // entre si, ya que cada punto en el plano pertenece a la region de voronoi de su segmento mas cercano
+                    if (k == i || k == j) continue;
+                    if (CheckIfHaveAnotherPositionCloser(intersectionPoint, segments[k].Final, maxDistance))
                     {
-                        // Check all segments again to verify if another segment is closer to the intersection than the current segment
-                        // Each intersection must represent a point where the two segments are the closest
-                        if (k == i || k == j) continue;
-                        if (CheckIfHaveAnotherPositionCloser(intersectionPoint, segments[k].Final, maxDistance))
-                        {
-                            checkValidPoint = true; // Intersection is invalid
-                            break;
-                        }
+                        checkValidPoint = true; // Interseccion no valida
+                        break;
                     }
+                }
 
-                    if (!checkValidPoint)
-                    {
-                        intersections.Add(intersectionPoint);
-                        segments[i].Intersections.Add(intersectionPoint);
-                        segments[j].Intersections.Add(intersectionPoint);
-                    }
+                if (!checkValidPoint)
+                {
+                    intersections.Add(intersectionPoint);
+                    segments[i].Intersections.Add(intersectionPoint);
+                    segments[j].Intersections.Add(intersectionPoint);
                 }
             }
 
-            // Each segment must have exactly two intersections with other segments; otherwise, it is invalid
-            segments.RemoveAll((s) => s.Intersections.Count != 2);
+            // Cada segmento debe tener exactamente dos intersecciones con otros segmentos, sino no es valido
+            segments.RemoveAll(s => s.Intersections.Count != 2);
 
-            // Sort the intersections according to their angle with respect to a given center
-            // This is necessary to ensure segments connect properly and avoid errors
+            // Ordeno las intersecciones de acuerdo al angulo con respecto a un centro
+            // determinado, sino los segmentos no se conectan bien y hay errores
             SortIntersections();
 
-            // Create a set of points to define the boundaries of the sectors
+            // Creo un conjunto de puntos para definir los limites de los sectores
             SetPointsInSector();
         }
 
-        /// <summary>
-        /// Calculates the intersection point of two segments.
-        /// </summary>
-        /// <param name="seg1">The first segment.</param>
-        /// <param name="seg2">The second segment.</param>
-        /// <returns>The intersection point, or a predefined point indicating no intersection.</returns>
-        private TCoordinate GetIntersection(Segment<TCoordinate, TCoordinateType> seg1, Segment<TCoordinate, TCoordinateType> seg2)
+
+        // Calculo la interseccion entre 2 segmentos definidos por 4 puntos
+        private TCoordinate GetIntersection(Segment<TCoordinate, TCoordinateType> seg1,
+            Segment<TCoordinate, TCoordinateType> seg2)
         {
-            TCoordinate intersection = new TCoordinate();
+            var intersection = new TCoordinate();
             intersection.Zero();
 
-            // Define the endpoints of the first segment
-            TCoordinate p1 = seg1.Mediatrix;
-            TCoordinate p2 = new TCoordinate();
+            var p1 = seg1.Mediatrix;
+            var p2 = new TCoordinate();
             p2.SetCoordinate(seg1.Mediatrix.GetCoordinate());
-            p2.Add(seg1.Direction.Multiply(Graph<Node<TCoordinateType>, TCoordinate, TCoordinateType>.MapDimensions.GetMagnitude()));
+            p2.Add(seg1.Direction.Multiply(Graph<RTSNode<TCoordinateType>, TCoordinate, TCoordinateType>.MapDimensions
+                .GetMagnitude()));
 
-            // Define the endpoints of the second segment
-            TCoordinate p3 = seg2.Mediatrix;
-            TCoordinate p4 = new TCoordinate();
+            var p3 = seg2.Mediatrix;
+            var p4 = new TCoordinate();
             p4.SetCoordinate(seg2.Mediatrix.GetCoordinate());
-            p4.Add(seg2.Direction.Multiply(Graph<Node<TCoordinateType>, TCoordinate, TCoordinateType>.MapDimensions.GetMagnitude()));
+            p4.Add(seg2.Direction.Multiply(Graph<RTSNode<TCoordinateType>, TCoordinate, TCoordinateType>.MapDimensions
+                .GetMagnitude()));
 
-            // Check if the two segments are parallel; if so, there is no intersection
-            float denominator = (p1.GetX() - p2.GetX()) * (p3.GetY() - p4.GetY()) - (p1.GetY() - p2.GetY()) * (p3.GetX() - p4.GetX());
+            // Chequeo si los dos segmentos son paralelos, si es asi no hay interseccion
+            if (Approximately((p1.GetX() - p2.GetX()) * (p3.GetY() - p4.GetY()) -
+                              (p1.GetY() - p2.GetY()) * (p3.GetX() - p4.GetX()), 0))
+                return _wrongPoint;
 
-            if (Approximately(denominator, 0))
-            {
-                return _wrongPoint; // Indicate no intersection
-            }
-            else
-            {
-                // Calculate the intersection point using line intersection formulas:
-                /*
-                   1. Line equations:                             Ax + By = C1      and      Ax + By = C2
-                   2. Calculate the main determinant (D):          D = A1 * B2 - A2 * B1
-                   3. Calculate determinant x (Dx):                Dx = C1 * B2 - C2 * B1
-                   4. Calculate determinant y (Dy):                Dy = A1 * C2 - A2 * C1
-                   5. Coordinates of the intersection point (x, y): x = Dx / D      and      y = Dy / D
+            // Para calcular las coordenadas de la interseccion uso la formula de interseccion de dos lineas en el plano:
+            /*
+                   1.Ecuaciones de lineas en el plano:                             Ax + By = C1      y      Ax + By = C2
+                   2. Calculo el determinante principal (D):                               D = A1 * B2 - A2 * B1
+                   3. Calcula el determinante x (Dx):                                      Dx = C1 * B2 - C2 * B1
+                   4. Calcula el determinante y (Dy):                                      Dy = A1 * C2 - A2 * C1
+                   5. Calcula las coordenadas del punto de intersección (x, y):      x = Dx / D      y      y = Dy / D
 
                    A1 = p1.x - p2.x
                    B1 = p1.y - p2.y
@@ -167,54 +204,42 @@ namespace Pathfinder.Voronoi
                    C1 = p1.x * p2.y - p1.y * p2.x
                    C2 = p3.x * p4.y - p3.y * p4.x
                 */
-                float C1 = p1.GetX() * p2.GetY() - p1.GetY() * p2.GetX();
-                float C2 = p3.GetX() * p4.GetY() - p3.GetY() * p4.GetX();
-
-                intersection.SetX((C1 * (p3.GetX() - p4.GetX()) - (p1.GetX() - p2.GetX()) * C2) / denominator);
-                intersection.SetY((C1 * (p3.GetY() - p4.GetY()) - (p1.GetY() - p2.GetY()) * C2) / denominator);
-                return intersection;
-            }
+            intersection.SetX(
+                ((p1.GetX() * p2.GetY() - p1.GetY() * p2.GetX()) * (p3.GetX() - p4.GetX()) -
+                 (p1.GetX() - p2.GetX()) * (p3.GetX() * p4.GetY() - p3.GetY() * p4.GetX())) /
+                ((p1.GetX() - p2.GetX()) * (p3.GetY() - p4.GetY()) -
+                 (p1.GetY() - p2.GetY()) * (p3.GetX() - p4.GetX())));
+            intersection.SetY(
+                ((p1.GetX() * p2.GetY() - p1.GetY() * p2.GetX()) * (p3.GetY() - p4.GetY()) -
+                 (p1.GetY() - p2.GetY()) * (p3.GetX() * p4.GetY() - p3.GetY() * p4.GetX())) /
+                ((p1.GetX() - p2.GetX()) * (p3.GetY() - p4.GetY()) -
+                 (p1.GetY() - p2.GetY()) * (p3.GetX() - p4.GetX())));
+            return intersection;
         }
 
-        /// <summary>
-        /// Checks if two floating-point numbers are approximately equal within a small tolerance.
-        /// </summary>
-        /// <param name="a">The first number.</param>
-        /// <param name="b">The second number.</param>
-        /// <returns>True if the numbers are approximately equal; otherwise, false.</returns>
         private bool Approximately(float a, float b)
         {
             return Math.Abs(a - b) < 1e-6f;
         }
 
-        /// <summary>
-        /// Checks if there is another position closer to the intersection point than the maximum distance allowed.
-        /// </summary>
-        /// <param name="intersectionPoint">The intersection point to check.</param>
-        /// <param name="pointEnd">The endpoint of the segment.</param>
-        /// <param name="maxDistance">The maximum distance allowed from the intersection point.</param>
-        /// <returns>True if there is a closer position; otherwise, false.</returns>
         private bool CheckIfHaveAnotherPositionCloser(TCoordinate intersectionPoint, TCoordinate pointEnd,
             float maxDistance)
         {
-            return (intersectionPoint.Distance(pointEnd.GetCoordinate()) < maxDistance);
+            return intersectionPoint.Distance(pointEnd.GetCoordinate()) < maxDistance;
         }
 
-        /// <summary>
-        /// Sorts the intersections based on their angle relative to the centroid of the intersection points.
-        /// </summary>
         private void SortIntersections()
         {
-            List<IntersectionPoint<TCoordinate>> intersectionPoints =
+            var intersectionPoints =
                 intersections.Select(coord => new IntersectionPoint<TCoordinate>(coord)).ToList();
 
-            // Calculate the minimum and maximum X and Y values of the intersections to determine the centroid
-            float minX = intersectionPoints[0].Position.GetX();
-            float maxX = intersectionPoints[0].Position.GetX();
-            float minY = intersectionPoints[0].Position.GetY();
-            float maxY = intersectionPoints[0].Position.GetY();
+            // Calculo los valores maximos y minimos de X e Y de las intersecciones para determinar el punto central (centroide)
+            var minX = intersectionPoints[0].Position.GetX();
+            var maxX = intersectionPoints[0].Position.GetX();
+            var minY = intersectionPoints[0].Position.GetY();
+            var maxY = intersectionPoints[0].Position.GetY();
 
-            for (int i = 0; i < intersections.Count; i++)
+            for (var i = 0; i < intersections.Count; i++)
             {
                 if (intersectionPoints[i].Position.GetX() < minX) minX = intersectionPoints[i].Position.GetX();
                 if (intersectionPoints[i].Position.GetX() > maxX) maxX = intersectionPoints[i].Position.GetX();
@@ -222,138 +247,42 @@ namespace Pathfinder.Voronoi
                 if (intersectionPoints[i].Position.GetY() > maxY) maxY = intersectionPoints[i].Position.GetY();
             }
 
-            // Determine the center (centroid) of the intersection points
-            TCoordinate center = new TCoordinate();
+            var center = new TCoordinate();
             center.SetCoordinate(minX + (maxX - minX) / 2, minY + (maxY - minY) / 2);
 
-            // Calculate the angle of each intersection relative to the centroid
-            // The angle is calculated in radians between the intersection point and the horizontal axis
+            // Calculo el angulo de cada interseccion con respecto al punto central:
+            // calculo el angulo en radianes entre el punto de interseccion y un punto central con el eje horizontal
             foreach (var coord in intersectionPoints)
             {
-                TCoordinate pos = coord.Position;
+                var pos = coord.Position;
                 coord.Angle = (float)Math.Acos((pos.GetX() - center.GetX()) /
                                                Math.Sqrt(Math.Pow(pos.GetX() - center.GetX(), 2f) +
                                                          Math.Pow(pos.GetY() - center.GetY(), 2f)));
 
-                // If the Y coordinate of the intersection is greater than the Y coordinate of the center,
-                // adjust the angle to ensure it is in the correct range (0 to 2π radians)
+                // Si la coordenada Y de la interseccion es mayor que la coordenada Y del centro, ajusto el angulo para
+                // garantizar que este en el rango correct (0 a 2pi radianes)
                 if (pos.GetY() > center.GetY())
                     coord.Angle = (float)(Math.PI + Math.PI - coord.Angle);
             }
 
-            // Sort the intersections based on their angles (ascending, counter-clockwise)
+            // Ordeno las interseccion en funcion de sus angulos (ascendente, en sentido anti-horario)
             intersectionPoints = intersectionPoints.OrderBy(p => p.Angle).ToList();
             intersections.Clear();
 
-            // Add the sorted intersections back to the list
-            foreach (var coord in intersectionPoints)
-            {
-                intersections.Add(coord.Position);
-            }
+            foreach (var coord in intersectionPoints) intersections.Add(coord.Position);
         }
 
-        /// <summary>
-        /// Sets the points in the sector based on the intersections.
-        /// </summary>
         private void SetPointsInSector()
         {
             points = new List<TCoordinate>();
             foreach (var coord in intersections)
-            {
-                // Assign each intersection as a point in the sector
+                // Asigno cada interseccion como un punto
                 points.Add(coord);
-            }
 
-            // Create an additional point equal to the first point to complete the boundary of the last sector
+            // Se crea un punto adicional que es igual al primer punto, para completar el limite del ultimo sector
             points.Add(points[0]);
         }
 
         #endregion
-
-        /// <summary>
-        /// Checks if a given position is inside the sector defined by the points.
-        /// </summary>
-        /// <param name="position">The position to check.</param>
-        /// <returns>True if the position is inside the sector; otherwise, false.</returns>
-        public bool CheckPointInSector(TCoordinate position) // Calculate if "position" is within a sector of the diagram
-        {
-            if (points == null) return false;
-
-            bool inside = false;
-
-            // Initialize "point" with the last point (^1) in the "points" array
-            TCoordinate point = new TCoordinate();
-            point.SetCoordinate(points[^1].GetCoordinate());
-
-            foreach (var coord in points)
-            {
-                // Store the X and Y values of the previous point and the current point
-                float previousX = point.GetX();
-                float previousY = point.GetY();
-                point.SetCoordinate(coord.GetCoordinate()); 
-
-                // The operator ^ toggles the value of the bool
-                // Check if "position" crosses a line formed by two consecutive points in the polygon:
-                // 1. Check if "position" is below the current and previous points on the vertical axis (1 comparison is V = V)
-                // 2. Check if "position" is to the left of the line connecting the current and previous points
-                bool condition1 = point.GetY() > position.GetY() ^ previousY > position.GetY();
-                bool condition2 = (position.GetX() - point.GetX()) <
-                                  (position.GetY() - point.GetY()) * (previousX - point.GetX()) /
-                                  (previousY - point.GetY());
-
-                // If both conditions are true, the point is outside the polygon
-                inside ^= condition1 && condition2;
-            }
-
-            return inside;
-        }
-
-        /// <summary>
-        /// Retrieves a list of nodes that are located within the sector.
-        /// </summary>
-        /// <param name="allNodes">The list of all nodes to check against.</param>
-        /// <returns>A list of nodes that are within the sector.</returns>
-        public List<Node<TCoordinate>> GetNodesInSector(List<Node<TCoordinate>> allNodes)
-        {
-            List<Node<TCoordinate>> nodesInSector = new List<Node<TCoordinate>>();
-
-            foreach (Node<TCoordinate> node in allNodes)
-            {
-                // Check if the node's coordinate is inside the sector
-                if (CheckPointInSector(node.GetCoordinate()))
-                {
-                    nodesInSector.Add(node);
-                }
-            }
-
-            return nodesInSector;
-        }
-
-        /// <summary>
-        /// Calculates the total weight of the nodes within the sector.
-        /// </summary>
-        /// <param name="nodesInSector">The list of nodes in the sector.</param>
-        /// <returns>The total weight of the nodes.</returns>
-        public int CalculateTotalWeight(List<Node<TCoordinate>> nodesInSector)
-        {
-            int totalWeight = 0;
-
-            //foreach (Node<TCoordinate> node in nodesInSector)
-            //{
-            //    // totalWeight += node.GetPathNodeCost();
-            //    totalWeight += 1; // Placeholder: each node currently contributes a weight of 1
-            //}
-
-            return totalWeight;
-        }
-
-        /// <summary>
-        /// Converts the points in the sector to an array for drawing purposes.
-        /// </summary>
-        /// <returns>An array of points in the sector.</returns>
-        public TCoordinate[] PointsToDraw()
-        {
-            return points.ToArray();
-        }
     }
 }
