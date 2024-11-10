@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Utils;
 
 namespace Pathfinder
 {
@@ -30,6 +31,7 @@ namespace Pathfinder
         public int gold;
 
         private ICollection<INode<Coordinate>> neighbors;
+        private SimNodeType nodeType;
 
         public RTSNode()
         {
@@ -77,7 +79,7 @@ namespace Pathfinder
             return RtsNodeType;
         }
 
-        public SimNodeType GetSimNodeType()
+        public SimNodeType NodeType()
         {
             return SimNodeType.Empty;
         }
@@ -91,6 +93,14 @@ namespace Pathfinder
         {
             cost = newCost;
         }
+
+        SimNodeType INode<Coordinate>.NodeType
+        {
+            get => nodeType;
+            set => nodeType = value;
+        }
+
+        public int Food { get; set; }
 
         public bool Equals(Coordinate other)
         {
@@ -126,7 +136,7 @@ namespace Pathfinder
     {
         private Coordinate coordinate;
         private int cost;
-        public int food;
+        public int Food { get; set; }
 
         private ICollection<INode<Coordinate>> neighbors;
 
@@ -138,7 +148,6 @@ namespace Pathfinder
         {
             coordinate = coord;
         }
-
         public SimNodeType NodeType { get; set; }
 
         public bool Equals(INode<Coordinate> other)
@@ -174,11 +183,6 @@ namespace Pathfinder
         public RTSNodeType GetRTSNodeType()
         {
             return RTSNodeType.Empty;
-        }
-
-        public SimNodeType GetSimNodeType()
-        {
-            return NodeType;
         }
 
         public int GetCost()

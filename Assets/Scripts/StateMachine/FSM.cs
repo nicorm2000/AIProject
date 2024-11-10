@@ -30,8 +30,8 @@ namespace StateMachine
             _transitions = new (int, Action)[states, flags];
 
             for (var i = 0; i < states; i++)
-                for (var j = 0; j < flags; j++)
-                    _transitions[i, j] = (UNNASIGNED_TRANSITION, null);
+            for (var j = 0; j < flags; j++)
+                _transitions[i, j] = (UNNASIGNED_TRANSITION, null);
 
             _behaviourTickParameters = new Dictionary<int, Func<object[]>>();
             _behaviourOnEnterParameters = new Dictionary<int, Func<object[]>>();
@@ -139,7 +139,13 @@ namespace StateMachine
 
         public int GetMainThreadCount()
         {
-            return GetCurrentStateTickBehaviours.MainThreadBehaviour.Count;
+            var currentStateBehaviours = GetCurrentStateTickBehaviours;
+            if (currentStateBehaviours.MainThreadBehaviour == null)
+            {
+                return 0;
+            }
+
+            return currentStateBehaviours.MainThreadBehaviour.Count;
         }
 
         public int GetMultiThreadCount()
