@@ -40,14 +40,17 @@ namespace NeuralNetworkDirectory.ECS
         private int currentTurn;
         private float accumTime;
         private bool isRunning;
-        private Dictionary<uint, GameObject> entities;
-        private static Dictionary<uint, SimAgent> _agents;
-        private static Dictionary<uint, Scavenger> _scavengers;
+        private Dictionary<uint, GameObject> entities = new();
+        private static Dictionary<uint, SimAgent> _agents = new();
+        private static Dictionary<uint, Scavenger> _scavengers = new();
+        private static Dictionary<uint, Herbivore> _herbivores = new();
+        private static Dictionary<uint, Carnivore> _carnivores = new();
         private Dictionary<uint, List<Genome>> population = new();
         private readonly List<SimAgent> populationGOs = new();
         private GraphManager gridManager;
         private GeneticAlgorithm genAlg;
         private FitnessManager fitnessManager;
+        private int behaviourCount;
 
         public int Generation { get; private set; }
         public float BestFitness { get; private set; }
@@ -56,7 +59,7 @@ namespace NeuralNetworkDirectory.ECS
 
         private void Awake()
         {
-            ECSManager.AddSystem(new NeuralNetSystem());
+            //ECSManager.AddSystem(new NeuralNetSystem());
             ECSManager.Init();
             entities = new Dictionary<uint, GameObject>();
             gridManager = new GraphManager(gridWidth, gridHeight);
@@ -64,6 +67,7 @@ namespace NeuralNetworkDirectory.ECS
             StartSimulation();
             InitializePlants();
             fitnessManager = new FitnessManager(_agents);
+            behaviourCount = GetHighestBehaviourCount();
         }
 
         private void FixedUpdate()
@@ -75,41 +79,60 @@ namespace NeuralNetworkDirectory.ECS
 
             accumTime += dt;
 
-            EntitiesTurn();
+            EntitiesTurn(dt);
 
             if (!(accumTime >= generationDuration)) return;
             accumTime -= generationDuration;
             Epoch();
         }
 
-        private void EntitiesTurn()
+        private void EntitiesTurn(float dt)
         {
+            Parallel.ForEach(_agents.Values, entity => { entity.UpdateInputs(); });
+
+            Parallel.ForEach(entities, entity =>
+            {
+                var inputComponent = ECSManager.GetComponent<InputComponent>(entity.Key);
+                if (inputComponent != null && _agents.ContainsKey(entity.Key))
+                {
+                    inputComponent.inputs = _agents[entity.Key].input;
+                }
+            });
+
+            ECSManager.Tick(dt);
+
+            Parallel.ForEach(entities, entity =>
+            {
+                var outputComponent = ECSManager.GetComponent<OutputComponent>(entity.Key);
+                if (outputComponent == null || !_agents.ContainsKey(entity.Key)) return;
+
+                _agents[entity.Key].output = outputComponent.outputs;
+            });
+
             Parallel.ForEach(_scavengers, entity =>
             {
                 var outputComponent = ECSManager.GetComponent<OutputComponent>(entity.Key);
-                var boid = _scavengers[entity.Key].boid;
+                var boid = _scavengers[entity.Key]?.boid;
 
-                if (boid)
+                if (boid != null && outputComponent != null)
                 {
                     UpdateBoidOffsets(boid, outputComponent.outputs[(int)BrainType.Flocking]);
                 }
             });
 
-            Parallel.ForEach(entities, entity =>
+            for (int i = 0; i < behaviourCount; i++)
             {
-                ECSManager.GetComponent<InputComponent>(entity.Key).inputs = _agents[entity.Key].input;
-            });
+                var tasks = _scavengers.Select(entity => Task.Run(() => entity.Value.Fsm.MultiThreadTick(i)))
+                    .ToArray();
 
-            ECSManager.Tick(Time.deltaTime);
+                foreach (var entity in _scavengers)
+                {
+                    entity.Value.Fsm.MainThreadTick(i);
+                }
 
-            Parallel.ForEach(entities, entity =>
-            {
-                ECSManager.GetComponent<InputComponent>(entity.Key).inputs = _agents[entity.Key].input;
+                Task.WaitAll(tasks);
+            }
 
-                _agents[entity.Key].output = ECSManager.GetComponent<OutputComponent>(entity.Key).outputs;
-
-                _agents[entity.Key].Tick(Time.deltaTime);
-            });
 
             fitnessManager.Tick();
         }
@@ -177,8 +200,8 @@ namespace NeuralNetworkDirectory.ECS
             for (var i = 0; i < count; i++)
             {
                 var entityID = ECSManager.CreateEntity();
-                ECSManager.AddComponent(entityID, new InputComponent());
                 var neuralNetComponent = new NeuralNetComponent();
+                ECSManager.AddComponent(entityID, new InputComponent());
                 ECSManager.AddComponent(entityID, neuralNetComponent);
                 ECSManager.AddComponent(entityID, new OutputComponent());
 
@@ -187,8 +210,8 @@ namespace NeuralNetworkDirectory.ECS
 
                 foreach (var brain in brains)
                 {
-                    var genome = new Genome(brain.Layers.
-                        Sum(layerList => layerList.Sum(layer => layer.GetWeights().Length)));
+                    var genome =
+                        new Genome(brain.Layers.Sum(layerList => layerList.Sum(layer => layer.GetWeights().Length)));
                     foreach (var layerList in brain.Layers)
                     {
                         foreach (var layer in layerList)
@@ -208,7 +231,19 @@ namespace NeuralNetworkDirectory.ECS
                 population[entityID] = genomes;
                 populationGOs.Add(agent);
                 agent.Init();
-                if (agentType == SimAgentTypes.Scavenger) _scavengers[entityID] = (Scavenger)agent;
+
+                switch (agentType)
+                {
+                    case SimAgentTypes.Scavenger:
+                        _scavengers[entityID] = agent as Scavenger;
+                        break;
+                    case SimAgentTypes.Carnivorous:
+                        _carnivores[entityID] = agent as Carnivore;
+                        break;
+                    case SimAgentTypes.Herbivore:
+                        _herbivores[entityID] = agent as Herbivore;
+                        break;
+                }
             }
         }
 
@@ -231,7 +266,8 @@ namespace NeuralNetworkDirectory.ECS
                     brains.Add(CreateSingleBrain(BrainType.ScavengerMovement));
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(agentType), agentType, "Not prepared for this agent type");
+                    throw new ArgumentOutOfRangeException(nameof(agentType), agentType,
+                        "Not prepared for this agent type");
             }
 
             return brains;
@@ -568,6 +604,26 @@ namespace NeuralNetworkDirectory.ECS
             }
 
             return nearestNode;
+        }
+
+        private int GetHighestBehaviourCount()
+        {
+            int highestCount = 0;
+
+            foreach (var entity in _scavengers.Values)
+            {
+                int multiThreadCount = entity.Fsm.GetMultiThreadCount();
+                int mainThreadCount =
+                    entity.Fsm.GetMainThreadCount(); // Assuming a similar method exists for main thread count
+
+                int maxCount = Math.Max(multiThreadCount, mainThreadCount);
+                if (maxCount > highestCount)
+                {
+                    highestCount = maxCount;
+                }
+            }
+
+            return highestCount;
         }
     }
 }
