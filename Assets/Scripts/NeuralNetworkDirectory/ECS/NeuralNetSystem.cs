@@ -1,4 +1,5 @@
-﻿using ECS.Patron;
+﻿using System;
+using ECS.Patron;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -17,6 +18,14 @@ namespace NeuralNetworkDirectory.ECS
             parallelOptions = new ParallelOptions { MaxDegreeOfParallelism = 32 };
         }
 
+        public override void Deinitialize()
+        {
+            neuralNetworkComponents = null;
+            outputComponents = null;
+            inputComponents = null;
+            queriedEntities = null;
+        }
+
         protected override void PreExecute(float deltaTime)
         {
             neuralNetworkComponents ??= ECSManager.GetComponents<NeuralNetComponent>();
@@ -28,22 +37,27 @@ namespace NeuralNetworkDirectory.ECS
 
         protected override void Execute(float deltaTime)
         {
+            const int MaxBrains = 3;
             Parallel.ForEach(queriedEntities, parallelOptions, entityId =>
             {
                 NeuralNetComponent neuralNetwork = neuralNetworkComponents[entityId];
                 float[][] inputs = inputComponents[entityId].inputs;
-                float[][] outputs = new float[outputComponents[entityId].outputsQty][];
+                float[] outputs = new float[3];
 
-                Parallel.For(0, outputs.Length, i =>
+                // TODO Parallel for rompe los outputs, cada tanto se saltea el for j o le da de output informacion de otra layer.
+                //Parallel.For(0, MaxBrains, i =>
+                for (int i = 0; i < MaxBrains; i++)
                 {
                     for (int j = 0; j < neuralNetwork.Layers[i].Count; j++)
                     {
-                        outputs[i] = neuralNetwork.Layers[i][j].Synapsis(inputs[i]);
-                        inputs[i] = outputs[i];
+                        outputs = neuralNetwork.Layers[i][j].Synapsis(inputs[i], i);
+                        inputs[i] = outputs;
                     }
 
-                    outputComponents[entityId].outputs[i] = outputs[i];
-                });
+                    if (neuralNetwork.Layers[i][^1].OutputsCount != outputs.Length) return;
+
+                    outputComponents[entityId].outputs[i] = outputs;
+                }
             });
         }
 

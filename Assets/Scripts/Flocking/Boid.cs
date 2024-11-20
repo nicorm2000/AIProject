@@ -5,15 +5,15 @@ namespace Flocking
 {
     public class Boid<TVector, TTransform> 
         where TVector : IVector, IEquatable<TVector>
-        where TTransform : ITransform<TVector>
+        where TTransform : ITransform<TVector>, new()
     {
         public float detectionRadious = 3.0f;
         public float alignmentOffset;
         public float cohesionOffset;
         public float separationOffset;
         public float directionOffset;
-        public TTransform target;
-        public TTransform transform; //arreglar    esto
+        public IVector target = new MyVector();
+        public TTransform transform = new TTransform();
 
         private Func<Boid<TVector, TTransform>, TVector> alignment;
         private Func<Boid<TVector, TTransform>, TVector> cohesion;

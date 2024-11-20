@@ -14,12 +14,12 @@ namespace StateMachine.States.SimStates
             var behaviours = new BehaviourActions();
 
             var currentNode = parameters[0] as SimNode<Vector2>;
-            var foodTarget = (SimNodeType)parameters[3];
-            var onMove = parameters[4] as Action;
-            var outputBrain1 = (float[])parameters[5];
-            var outputBrain2 = (float[])parameters[6];
+            var foodTarget = (SimNodeType)parameters[1];
+            var onMove = parameters[2] as Action;
+            var outputBrain1 = (float[])parameters[3];
+            var outputBrain2 = (float[])parameters[4];
 
-            behaviours.AddMultiThreadableBehaviours(0, () => { onMove?.Invoke(); });
+            behaviours.AddMultiThreadableBehaviours(0, () => { onMove.Invoke(); });
 
             //behaviours.AddMainThreadBehaviours(1, () =>
             //{
@@ -32,7 +32,6 @@ namespace StateMachine.States.SimStates
             {
                 if (outputBrain1[0] > 0.5f && currentNode != null && currentNode.NodeType == foodTarget)
                     OnFlag?.Invoke(Flags.OnEat);
-                if (outputBrain1[1] > 0.5f) OnFlag?.Invoke(Flags.OnSearchFood);
                 SpecialAction(outputBrain2);
             });
             return behaviours;
@@ -59,26 +58,23 @@ namespace StateMachine.States.SimStates
         {
             var behaviours = new BehaviourActions();
 
-            var currentNode = parameters[0] as SimNode<Vector2>;
-            var foodTarget = (SimNodeType)parameters[2];
-            var onMove = parameters[3] as Action;
-            var outputBrain1 = (float[])parameters[4];
+            var position = parameters[0] as IVector;
+            var nearestFood = parameters[1] as IVector;
+            var onMove = parameters[2] as Action;
+            var outputBrain1 = (float[])parameters[3];
+            IVector distanceToFood = new MyVector();
+            IVector maxDistance = new MyVector(4,4);
 
-            behaviours.AddMultiThreadableBehaviours(0, () => { onMove?.Invoke(); });
-
-            // Done by population manager
-            //behaviours.AddMainThreadBehaviours(1, () =>
-            //{
-            //    if (currentNode == null) return;
-
-            //    position.position = new Vector3(currentNode.GetCoordinate().x, currentNode.GetCoordinate().y);
-            //});
+            behaviours.AddMultiThreadableBehaviours(0, () =>
+            {
+                onMove.Invoke();
+                distanceToFood = new MyVector(nearestFood.X - position.X, nearestFood.Y - position.Y);
+            });
 
             behaviours.SetTransitionBehaviour(() =>
             {
-                if (outputBrain1[0] > 0.5f && currentNode != null && currentNode.NodeType == foodTarget)
+                if (outputBrain1[0] > 0.5f && distanceToFood.Magnitude() < maxDistance.Magnitude())
                     OnFlag?.Invoke(Flags.OnEat);
-                if (outputBrain1[1] > 0.5f) OnFlag?.Invoke(Flags.OnSearchFood);
             });
             return behaviours;
         }

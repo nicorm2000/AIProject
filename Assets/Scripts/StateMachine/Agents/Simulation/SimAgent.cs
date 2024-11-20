@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using FlappyIa.GeneticAlg;
 using NeuralNetworkDirectory.ECS;
 using NeuralNetworkDirectory.NeuralNet;
@@ -10,7 +11,7 @@ namespace StateMachine.Agents.Simulation
 {
     public enum SimAgentTypes
     {
-        Carnivorous,
+        Carnivore,
         Herbivore,
         Scavenger
     }
@@ -36,31 +37,33 @@ namespace StateMachine.Agents.Simulation
             Attack
         }
 
-        public TTransform transform = new();
-
-        public INode<IVector> CurrentNode
+        public virtual TTransform Transform
         {
-            get => currentNode;
-            set
-            {
-                currentNode = value;
-                transform.position = value.GetCoordinate();
-            }
+            get => transform;
+            set => transform = value;
         }
 
-        private INode<IVector> currentNode;
+        public virtual INode<IVector> CurrentNode
+        {
+            get { return EcsPopulationManager.graph.NodesType[(int)Transform.position.X, (int)Transform.position.Y]; }
+            private set { }
+        }
+
+        protected TTransform transform = new TTransform();
+        protected INode<IVector> currentNode = new SimNode<IVector>();
         public bool CanReproduce() => Food >= FoodLimit;
-        public SimAgentTypes agentType { get; protected set; }
+        public SimAgentTypes agentType { get; set; }
         public FSM<Behaviours, Flags> Fsm;
 
         protected int movement = 3;
         protected SimNodeType foodTarget;
-        protected int FoodLimit = 5;
-        protected int Food = 0;
+        public int FoodLimit { get; protected set; } = 5;
+        public int Food { get; protected set; } = 0;
         protected Action OnMove;
         protected Action OnEat;
         protected float dt;
-        protected const int NoTarget = -99999;
+        protected const int NoTarget = -1;
+
         protected SimNode<TVector> TargetNode
         {
             get => targetNode;
@@ -71,7 +74,7 @@ namespace StateMachine.Agents.Simulation
         Genome[] genomes;
         public float[][] output;
         public float[][] input;
-        public BrainType[] brainTypes;
+        public Dictionary<int, BrainType> brainTypes = new();
 
         public SimAgent()
         {
@@ -84,19 +87,14 @@ namespace StateMachine.Agents.Simulation
 
         public virtual void Init()
         {
-            int brainTypesCount = Enum.GetValues(typeof(BrainType)).Length;
-            input = new float[brainTypesCount][];
-            output = new float[brainTypesCount][];
-            brainTypes = new BrainType[brainTypesCount];
-
-            const int MaxInputs = 8;
-            for (int i = 0; i < brainTypesCount; i++)
-            {
-                input[i] = new float[MaxInputs]; // Assuming each brain type requires 4 inputs
-                output[i] = new float[MaxInputs]; // Assuming each brain type produces 4 outputs
-            }
-
             Fsm = new FSM<Behaviours, Flags>();
+            output = new float[brainTypes.Count][];
+            foreach (var brain in brainTypes.Values)
+            {
+                EcsPopulationManager.NeuronInputCount inputsCount =
+                    EcsPopulationManager.InputCountCache[(brain, agentType)];
+                output[GetBrainTypeKeyByValue(brain)] = new float[inputsCount.outputCount];
+            }
 
             OnMove += Move;
             OnEat += Eat;
@@ -104,8 +102,30 @@ namespace StateMachine.Agents.Simulation
             FsmBehaviours();
 
             FsmTransitions();
-
+            Fsm.ForceTransition(Behaviours.Walk);
             //UpdateInputs();
+        }
+
+        public virtual void Reset()
+        {
+            Food = 0;
+            Fsm.ForceTransition(Behaviours.Walk);
+            CalculateInputs();
+        }
+
+        protected void CalculateInputs()
+        {
+            int brainTypesCount = brainTypes.Count;
+            input = new float[brainTypesCount][];
+            output = new float[brainTypesCount][];
+
+            for (int i = 0; i < brainTypesCount; i++)
+            {
+                var brainType = brainTypes[i];
+                input[i] = new float[GetInputCount(brainType)];
+                int outputCount = EcsPopulationManager.InputCountCache[(brainType, agentType)].outputCount;
+                output[i] = new float[outputCount];
+            }
         }
 
         public virtual void Uninit()
@@ -130,12 +150,14 @@ namespace StateMachine.Agents.Simulation
 
         private void FindFoodInputs()
         {
-            
-            int brain = (int)BrainType.Eat;
-            input[brain][0] = CurrentNode.GetCoordinate().X;
-            input[brain][1] = CurrentNode.GetCoordinate().Y;
+            int brain = GetBrainTypeKeyByValue(BrainType.Eat);
+            var inputCount = GetInputCount(BrainType.Eat);
+            input[brain] = new float[inputCount];
+
+            input[brain][0] = Transform.position.X;
+            input[brain][1] = Transform.position.Y;
             INode<IVector> target = GetTarget(foodTarget);
-            
+
             if (target == null)
             {
                 input[brain][2] = NoTarget;
@@ -186,10 +208,12 @@ namespace StateMachine.Agents.Simulation
 
         protected virtual object[] WalkTickParameters()
         {
-            int extraBrain = agentType == SimAgentTypes.Carnivorous ? (int)BrainType.Attack : (int)BrainType.Escape;
+            int extraBrain = agentType == SimAgentTypes.Carnivore
+                ? GetBrainTypeKeyByValue(BrainType.Attack)
+                : GetBrainTypeKeyByValue(BrainType.Escape);
             object[] objects =
             {
-                CurrentNode, TargetNode, transform, foodTarget, OnMove, output[(int)BrainType.Movement],
+                CurrentNode, foodTarget, OnMove, output[GetBrainTypeKeyByValue(BrainType.Eat)],
                 output[extraBrain]
             };
             return objects;
@@ -204,7 +228,12 @@ namespace StateMachine.Agents.Simulation
 
         protected virtual object[] EatTickParameters()
         {
-            object[] objects = { CurrentNode, foodTarget, OnEat, output[0], output[1] };
+            int extraBrain = agentType == SimAgentTypes.Carnivore
+                ? GetBrainTypeKeyByValue(BrainType.Attack)
+                : GetBrainTypeKeyByValue(BrainType.Escape);
+
+            object[] objects =
+                { CurrentNode, foodTarget, OnEat, output[GetBrainTypeKeyByValue(BrainType.Eat)], output[extraBrain] };
             return objects;
         }
 
@@ -212,47 +241,47 @@ namespace StateMachine.Agents.Simulation
 
         protected virtual void Move()
         {
-            if (CurrentNode == null || TargetNode == null) return;
+            int brain = GetBrainTypeKeyByValue(BrainType.Movement);
 
-            if (CurrentNode.GetCoordinate().Equals(TargetNode.GetCoordinate())) return;
+            IVector targetPos = new MyVector(CurrentNode.GetCoordinate().X, CurrentNode.GetCoordinate().Y);
+            targetPos = CalculateNewPosition(targetPos, output[brain]);
 
-            int brain = (int)BrainType.Movement;
-            var targetPos = CurrentNode.GetCoordinate();
-            float speed = CalculateSpeed(output[brain][2]);
+            if (!EcsPopulationManager.graph.IsWithinGraphBorders(targetPos)) return;
 
-            targetPos = CalculateNewPosition(targetPos, output[brain], speed);
-
-            if (!targetPos.Equals(null)) CurrentNode = EcsPopulationManager.CoordinateToNode(targetPos);
+            var newPos = EcsPopulationManager.CoordinateToNode(targetPos);
+            if (newPos != null) SetPosition(newPos.GetCoordinate());
         }
 
         private float CalculateSpeed(float rawSpeed)
         {
             if (rawSpeed < 1) return movement;
-            if (rawSpeed < 0) return movement - 1;
-            if (rawSpeed < -0.6) return movement - 2;
+            if (rawSpeed < 0.5) return movement - 1;
+            if (rawSpeed < 0.2) return movement - 2;
             return rawSpeed;
         }
 
-        private IVector CalculateNewPosition(IVector targetPos, float[] brainOutput, float speed)
+        private IVector CalculateNewPosition(IVector targetPos, float[] brainOutput)
         {
-            if (brainOutput[0] > 0)
+            float speed = CalculateSpeed(Math.Abs(brainOutput[^1]));
+            
+            if (brainOutput[0] > 0.5)
             {
-                if (brainOutput[1] > 0.1) // Right
+                if (brainOutput[^1] > 0.5) // Right
                 {
                     targetPos.X += speed;
                 }
-                else if (brainOutput[1] < -0.1) // Left
+                else //if (brainOutput[^1] < -0.1) // Left
                 {
                     targetPos.X -= speed;
                 }
             }
             else
             {
-                if (brainOutput[1] > 0.1) // Up
+                if (brainOutput[^1] > 0.5) // Up
                 {
                     targetPos.Y += speed;
                 }
-                else if (brainOutput[1] < -0.1) // Down
+                else// if (brainOutput[^1] < -0.1) // Down
                 {
                     targetPos.Y -= speed;
                 }
@@ -263,7 +292,31 @@ namespace StateMachine.Agents.Simulation
 
         protected virtual INode<IVector> GetTarget(SimNodeType nodeType = SimNodeType.Empty)
         {
-            return EcsPopulationManager.GetNearestNode(nodeType, CurrentNode);
+            return EcsPopulationManager.GetNearestNode(nodeType, transform.position);
+        }
+
+        protected int GetInputCount(BrainType brainType)
+        {
+            return InputCountCache.GetInputCount(agentType, brainType);
+        }
+
+        public virtual void SetPosition(IVector position)
+        {
+            if (!EcsPopulationManager.graph.IsWithinGraphBorders(position)) return;
+            Transform.position = position;
+        }
+
+        public int GetBrainTypeKeyByValue(BrainType value)
+        {
+            foreach (var kvp in brainTypes)
+            {
+                if (EqualityComparer<BrainType>.Default.Equals(kvp.Value, value))
+                {
+                    return kvp.Key;
+                }
+            }
+
+            throw new KeyNotFoundException("The value is not present in the brainTypes dictionary.");
         }
     }
 }

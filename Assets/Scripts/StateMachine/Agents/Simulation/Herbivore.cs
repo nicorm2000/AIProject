@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using NeuralNetworkDirectory.ECS;
 using NeuralNetworkDirectory.NeuralNet;
 using Pathfinder;
@@ -28,19 +29,28 @@ namespace StateMachine.Agents.Simulation
         public override void Init()
         {
             base.Init();
-            agentType = SimAgentTypes.Herbivore;
             foodTarget = SimNodeType.Bush;
-            brainTypes = new[] { BrainType.Movement, BrainType.Escape, BrainType.Eat };
+            
+            CalculateInputs();
 
+            hp = InitialHp;
+        }
+        
+        public override void Reset()
+        {
+            base.Reset();
             hp = InitialHp;
         }
 
         protected override void ExtraInputs()
         {
-            int brain = (int)BrainType.Attack;
+            int brain = GetBrainTypeKeyByValue(BrainType.Escape);
+            var inputCount = GetInputCount(BrainType.Escape);
+            
+            input[brain] = new float[inputCount];
             input[brain][0] = CurrentNode.GetCoordinate().X;
             input[brain][1] = CurrentNode.GetCoordinate().Y;
-            var target = EcsPopulationManager.GetNearestEntity(SimAgentTypes.Carnivorous, CurrentNode);
+            var target = EcsPopulationManager.GetNearestEntity(SimAgentTypes.Carnivore, Transform.position);
             if (target == null)
             {
                 input[brain][2] = NoTarget;
@@ -55,12 +65,14 @@ namespace StateMachine.Agents.Simulation
 
         protected override void MovementInputs()
         {
-            int brain = (int)BrainType.Movement;
-
+            int brain = GetBrainTypeKeyByValue(BrainType.Movement);
+            var inputCount = GetInputCount(BrainType.Movement);
+            
+            input[brain] = new float[inputCount];
             input[brain][0] = CurrentNode.GetCoordinate().X;
             input[brain][1] = CurrentNode.GetCoordinate().Y;
 
-            var target = EcsPopulationManager.GetNearestEntity(SimAgentTypes.Carnivorous, CurrentNode);
+            var target = EcsPopulationManager.GetNearestEntity(SimAgentTypes.Carnivore, Transform.position);
             if (target == null)
             {
                 input[brain][2] = NoTarget;
@@ -93,13 +105,30 @@ namespace StateMachine.Agents.Simulation
             var node = CurrentNode;
             node.NodeType = SimNodeType.Corpse;
             node.Food = FoodDropped;
+            EcsPopulationManager.RemoveEntity(this as SimAgent<IVector, ITransform<IVector>>);
+        }
+
+        protected override void EatTransitions()
+        {
+            Fsm.SetTransition(Behaviours.Eat, Flags.OnEat, Behaviours.Eat);
+            Fsm.SetTransition(Behaviours.Eat, Flags.OnSearchFood, Behaviours.Walk);
+            Fsm.SetTransition(Behaviours.Eat, Flags.OnEscape, Behaviours.Walk);
+        }
+
+        protected override void WalkTransitions()
+        {
+            Fsm.SetTransition(Behaviours.Walk, Flags.OnEat, Behaviours.Eat);
+            Fsm.SetTransition(Behaviours.Walk, Flags.OnEscape, Behaviours.Walk);
+        }
+
+        protected override void ExtraTransitions()
+        {
         }
 
         protected override void ExtraBehaviours()
         {
             Fsm.AddBehaviour<SimEatHerbState>(Behaviours.Eat, EatTickParameters);
-
-            Fsm.AddBehaviour<SimWalkHerbState>(Behaviours.Escape, WalkTickParameters);
+            Fsm.AddBehaviour<SimWalkHerbState>(Behaviours.Walk, WalkTickParameters);
         }
     }
 }

@@ -22,7 +22,12 @@ namespace Utils
 
         public static MyVector operator +(IVector a, IVector b)
         {
-            return new MyVector(a.X + b.X, a.Y + b.Y);
+            float x1 = a?.X ?? 0;
+            float y1 = a?.Y ?? 0;
+            float x2 = b?.X ?? 0;
+            float y2 = b?.Y ?? 0;
+
+            return new MyVector(x1 + x2, y1 + y2);
         }
 
         public static MyVector operator -(IVector a, IVector b)
@@ -34,10 +39,25 @@ namespace Utils
         {
             return new MyVector(a.X / integer, a.Y / integer);
         }
+        
+        public static bool operator <(IVector a, IVector b)
+        {
+            return (a.X < b.X  && a.Y < b.Y );
+        }
+
+        public static bool operator >(IVector a, IVector b)
+        {
+            return (a.X > b.X && a.Y > b.Y);
+        }
 
         static float Dot(IVector a, IVector b)
         {
             return a.X * b.X + a.Y * b.Y;
+        }
+        
+        public float Magnitude()
+        {
+            return (float)Math.Sqrt(X * X + Y * Y);
         }
     }
 
@@ -54,6 +74,8 @@ namespace Utils
 
         public MyVector()
         {
+            X = 0;
+            Y = 0;
         }
 
         public IVector Normalized()
@@ -70,7 +92,6 @@ namespace Utils
         public static float Distance(IVector a, IVector b)
         {
             return (float)Math.Sqrt(Math.Pow(a.X - b.X, 2) + Math.Pow(a.Y - b.Y, 2));
-            
         }
 
         public static MyVector operator +(MyVector a, MyVector b)
@@ -102,10 +123,10 @@ namespace Utils
         {
             return new MyVector(0, 0);
         }
-        
+
         public static MyVector NoTarget()
         {
-            return new MyVector(-99999, -99999);
+            return new MyVector(-1, -1);
         }
 
         public bool Equals(IVector other)

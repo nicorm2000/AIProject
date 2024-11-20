@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Flocking;
 using NeuralNetworkDirectory.ECS;
 using NeuralNetworkDirectory.NeuralNet;
@@ -12,40 +13,67 @@ namespace StateMachine.Agents.Simulation
         where TTransform : ITransform<IVector>, new()
         where TVector : IVector, IEquatable<TVector>
     {
-        public Boid<IVector, ITransform<IVector>> boid;
+        public Boid<IVector, ITransform<IVector>> boid = new Boid<IVector, ITransform<IVector>>();
         public float cellSize;
         public float Speed;
         public float RotSpeed = 20.0f;
-        private int turnLeftCount;
-        private int turnRightCount;
+        private IVector targetPosition = new MyVector();
+
+        public override TTransform Transform
+        {
+            get => transform;
+            set
+            {
+                transform = value;
+                boid.transform.position = value.position;
+                boid.transform.forward = (targetPosition - value.position).Normalized();
+            }
+        }
 
         public override void Init()
         {
+            targetPosition = GetTargetPosition();
+            Transform.forward = (targetPosition - Transform.position).Normalized();
+            boid = new Boid<IVector, ITransform<IVector>>
+            {
+                transform = Transform,
+                target = targetPosition,
+            };
+
+            boid.transform.forward ??= MyVector.zero();
+
             base.Init();
-            agentType = SimAgentTypes.Scavenger;
             foodTarget = SimNodeType.Carrion;
             FoodLimit = 20;
             movement = 5;
-            Speed = movement * cellSize;
-            brainTypes = new[] { BrainType.Movement, BrainType.Eat };
-            boid = new Boid<IVector, ITransform<IVector>>();
-            //boid.transform.position = CurrentNode.GetCoordinate(); Puede ser por aca el fix
+            Speed = movement * 1;
+
+            CalculateInputs();
         }
 
-        protected override void FsmBehaviours()
+        public override void Reset()
         {
-            Fsm.AddBehaviour<SimWalkScavState>(Behaviours.Walk, WalkTickParameters);
-            ExtraBehaviours();
+            base.Reset();
+            boid = new Boid<IVector, ITransform<IVector>>
+            {
+                transform = Transform,
+                target = targetPosition,
+            };
+            boid.Init(EcsPopulationManager.flockingManager.Alignment, EcsPopulationManager.flockingManager.Cohesion,
+                EcsPopulationManager.flockingManager.Separation, EcsPopulationManager.flockingManager.Direction);
         }
+
 
         protected override void MovementInputs()
         {
-            int brain = (int)BrainType.ScavengerMovement;
+            int brain = GetBrainTypeKeyByValue(BrainType.ScavengerMovement);
+            var inputCount = GetInputCount(BrainType.ScavengerMovement);
 
-            input[brain][0] = CurrentNode.GetCoordinate().X;
-            input[brain][1] = CurrentNode.GetCoordinate().Y;
+            input[brain] = new float[inputCount];
+            input[brain][0] = Transform.position.X;
+            input[brain][1] = Transform.position.Y;
 
-            var target = EcsPopulationManager.GetNearestEntity(SimAgentTypes.Carnivorous, CurrentNode);
+            var target = EcsPopulationManager.GetNearestEntity(SimAgentTypes.Carnivore, Transform.position);
             if (target == null || target.CurrentNode == null)
             {
                 input[brain][2] = NoTarget;
@@ -53,20 +81,20 @@ namespace StateMachine.Agents.Simulation
             }
             else
             {
-                input[brain][2] = target.CurrentNode.GetCoordinate().X;
-                input[brain][3] = target.CurrentNode.GetCoordinate().Y;
+                input[brain][2] = target.Transform.position.X;
+                input[brain][3] = target.Transform.position.Y;
             }
 
-            INode<IVector> nodeTarget = GetTarget(foodTarget);
-            if (nodeTarget == null)
+            targetPosition = GetTargetPosition();
+            if (targetPosition == null)
             {
                 input[brain][4] = NoTarget;
                 input[brain][5] = NoTarget;
             }
             else
             {
-                input[brain][4] = nodeTarget.GetCoordinate().X;
-                input[brain][5] = nodeTarget.GetCoordinate().Y;
+                input[brain][4] = targetPosition.X;
+                input[brain][5] = targetPosition.Y;
             }
 
             input[brain][6] = Food;
@@ -74,16 +102,18 @@ namespace StateMachine.Agents.Simulation
 
         protected override void ExtraInputs()
         {
-            int brain = (int)BrainType.Flocking;
-            IVector targetPosition = GetTargetPosition();
+            int brain = GetBrainTypeKeyByValue(BrainType.Flocking);
+            var inputCount = GetInputCount(BrainType.Flocking);
+            input[brain] = new float[inputCount];
 
-            input[brain][0] = CurrentNode.GetCoordinate().X;
-            input[brain][1] = CurrentNode.GetCoordinate().Y;
+            targetPosition = GetTargetPosition();
 
-            // Current direction of the boid
+            input[brain][0] = Transform.position.X;
+            input[brain][1] = Transform.position.Y;
+
             if (targetPosition != null)
             {
-                IVector direction = (targetPosition - CurrentNode.GetCoordinate()).Normalized();
+                IVector direction = (targetPosition - Transform.position).Normalized();
                 input[brain][2] = direction.X;
                 input[brain][3] = direction.Y;
             }
@@ -93,32 +123,42 @@ namespace StateMachine.Agents.Simulation
                 input[brain][3] = NoTarget;
             }
 
-            // Average position of neighboring boids
             IVector avgNeighborPosition = GetAverageNeighborPosition();
             input[brain][4] = avgNeighborPosition.X;
             input[brain][5] = avgNeighborPosition.Y;
 
-            // Average direction of neighboring boids
             IVector avgNeighborVelocity = GetAverageNeighborDirection();
             input[brain][6] = avgNeighborVelocity.X;
             input[brain][7] = avgNeighborVelocity.Y;
 
-            // Separation vector
             IVector separationVector = GetSeparationVector();
             input[brain][8] = separationVector.X;
             input[brain][9] = separationVector.Y;
 
-            // Alignment vector
             IVector alignmentVector = GetAlignmentVector();
-            input[brain][10] = alignmentVector.X;
-            input[brain][11] = alignmentVector.Y;
+            if (alignmentVector == null)
+            {
+                input[brain][10] = NoTarget;
+                input[brain][11] = NoTarget;
+            }
+            else
+            {
+                input[brain][10] = alignmentVector.X;
+                input[brain][11] = alignmentVector.Y;
+            }
 
-            // Cohesion vector
             IVector cohesionVector = GetCohesionVector();
-            input[brain][12] = cohesionVector.X;
-            input[brain][13] = cohesionVector.Y;
+            if (cohesionVector == null)
+            {
+                input[brain][12] = NoTarget;
+                input[brain][13] = NoTarget;
+            }
+            else
+            {
+                input[brain][12] = cohesionVector.X;
+                input[brain][13] = cohesionVector.Y;
+            }
 
-            // Distance to target
             if (targetPosition == null)
             {
                 input[brain][14] = NoTarget;
@@ -128,17 +168,18 @@ namespace StateMachine.Agents.Simulation
 
             input[brain][14] = targetPosition.X;
             input[brain][15] = targetPosition.Y;
-            boid.target.position = targetPosition;
+            boid.target = targetPosition;
         }
 
-        protected override void ExtraBehaviours()
-        {
-            Fsm.AddBehaviour<SimEatState>(Behaviours.Eat, EatTickParameters);
-        }
 
         private IVector GetAverageNeighborPosition()
         {
             var nearBoids = EcsPopulationManager.GetBoidsInsideRadius(boid);
+
+            if (nearBoids.Count == 0)
+            {
+                return MyVector.zero();
+            }
 
             var avg = MyVector.zero();
             foreach (var boid in nearBoids)
@@ -153,6 +194,11 @@ namespace StateMachine.Agents.Simulation
         private IVector GetAverageNeighborDirection()
         {
             var nearBoids = EcsPopulationManager.GetBoidsInsideRadius(boid);
+
+            if (nearBoids.Count == 0)
+            {
+                return MyVector.zero();
+            }
 
             var avg = MyVector.zero();
             foreach (var boid1 in nearBoids)
@@ -192,41 +238,71 @@ namespace StateMachine.Agents.Simulation
 
         protected override void Move()
         {
-            float leftForce = output[(int)BrainType.ScavengerMovement][0];
-            float rightForce = output[(int)BrainType.ScavengerMovement][1];
+            int index = GetBrainTypeKeyByValue(BrainType.ScavengerMovement);
+            if (output[index].Length != 2) return;
+            float leftForce = output[index][0];
+            float rightForce = output[index][1];
 
-            var pos = transform.position;
-            var rotFactor = Math.Clamp(rightForce - leftForce, -1.0f, 1.0f);
+            var pos = Transform.position;
+            //var rotFactor = Math.Clamp(rightForce - leftForce, -1.0f, 1.0f);
             //transform.rotation *= Quaternion.AngleAxis(rotFactor * RotSpeed * dt, Vector3.up);
             //pos += transform.forward * (Math.Abs(rightForce + leftForce) * 0.5f * Speed * dt);
             //transform.position = pos;
 
-            if (rightForce > leftForce)
+            leftForce = (leftForce - 0.5f) * 2.0f;
+
+            rightForce = (rightForce - 0.5f) * 2.0f;
+
+            var currentPos = new MyVector(Transform.position.X, Transform.position.Y);
+            currentPos.X += rightForce;
+            currentPos.Y += leftForce;
+
+            if (!EcsPopulationManager.graph.IsWithinGraphBorders(currentPos))
             {
-                turnRightCount++;
-                turnLeftCount = 0;
+                if (currentPos.X < EcsPopulationManager.graph.MinX)
+                {
+                    currentPos.X = EcsPopulationManager.graph.MaxX;
+                }
+
+                if (currentPos.X > EcsPopulationManager.graph.MaxX)
+                {
+                    currentPos.X = EcsPopulationManager.graph.MinX;
+                }
+
+                if (currentPos.Y < EcsPopulationManager.graph.MinY)
+                {
+                    currentPos.Y = EcsPopulationManager.graph.MaxY;
+                }
+
+                if (currentPos.Y > EcsPopulationManager.graph.MaxY)
+                {
+                    currentPos.Y = EcsPopulationManager.graph.MinY;
+                }
             }
-            else
-            {
-                turnLeftCount++;
-                turnRightCount = 0;
-            }
+
+            SetPosition(currentPos);
         }
 
+        public override void SetPosition(IVector position)
+        {
+            base.SetPosition(position);
+            boid.transform.position = position;
+            boid.transform.forward = (targetPosition - position).Normalized();
+        }
 
         protected override INode<IVector> GetTarget(SimNodeType nodeType = SimNodeType.Empty)
         {
-            INode<IVector> target = EcsPopulationManager.GetNearestNode(nodeType, CurrentNode);
-            
+            INode<IVector> target = EcsPopulationManager.GetNearestNode(nodeType, Transform.position);
+
 
             if (target == null)
             {
-                target = EcsPopulationManager.GetNearestNode(SimNodeType.Corpse, CurrentNode);
+                target = EcsPopulationManager.GetNearestNode(SimNodeType.Corpse, Transform.position);
             }
 
             if (target == null)
             {
-                var nearestEntity = EcsPopulationManager.GetNearestEntity(SimAgentTypes.Carnivorous, CurrentNode);
+                var nearestEntity = EcsPopulationManager.GetNearestEntity(SimAgentTypes.Carnivore, Transform.position);
                 if (nearestEntity != null)
                 {
                     target = nearestEntity.CurrentNode;
@@ -236,12 +312,47 @@ namespace StateMachine.Agents.Simulation
             return target;
         }
 
+        protected override void FsmBehaviours()
+        {
+            Fsm.AddBehaviour<SimWalkScavState>(Behaviours.Walk, WalkTickParameters);
+            ExtraBehaviours();
+        }
+
+        protected override void ExtraBehaviours()
+        {
+            Fsm.AddBehaviour<SimEatScavState>(Behaviours.Eat, EatTickParameters);
+        }
+
+        protected override object[] EatTickParameters()
+        {
+            object[] objects =
+            {
+                Transform.position,
+                EcsPopulationManager.graph.NodesType[(int)targetPosition.X, (int)targetPosition.Y],
+                OnEat,
+                output[GetBrainTypeKeyByValue(BrainType.Eat)]
+            };
+            return objects;
+        }
+
         protected override object[] WalkTickParameters()
         {
             object[] objects =
-                { CurrentNode, transform, foodTarget, OnMove, output[(int)BrainType.ScavengerMovement] };
+                { Transform.position, targetPosition, OnMove, output[GetBrainTypeKeyByValue(BrainType.Eat)] };
 
             return objects;
+        }
+
+        protected override void EatTransitions()
+        {
+            Fsm.SetTransition(Behaviours.Eat, Flags.OnEat, Behaviours.Eat);
+            Fsm.SetTransition(Behaviours.Eat, Flags.OnSearchFood, Behaviours.Walk);
+        }
+
+        protected override void WalkTransitions()
+        {
+            Fsm.SetTransition(Behaviours.Walk, Flags.OnEat, Behaviours.Eat);
+            Fsm.SetTransition(Behaviours.Walk, Flags.OnSearchFood, Behaviours.Walk);
         }
     }
 }
