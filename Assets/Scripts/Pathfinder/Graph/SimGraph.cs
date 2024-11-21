@@ -1,5 +1,6 @@
-﻿        using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Pathfinder.Graph
 {
@@ -13,7 +14,10 @@ namespace Pathfinder.Graph
         public static float CellSize;
         public TCoordinateNode[,] CoordNodes;
         public readonly TNodeType[,] NodesType;
-
+        private ParallelOptions parallelOptions = new()
+        {
+            MaxDegreeOfParallelism = 32
+        };
         public SimGraph(int x, int y, float cellSize)
         {
             MapDimensions = new TCoordinateNode();
@@ -25,7 +29,7 @@ namespace Pathfinder.Graph
 
             CreateGraph(x, y, cellSize);
 
-            AddNeighbors(cellSize);
+            //AddNeighbors(cellSize);
         }
 
         public abstract void CreateGraph(int x, int y, float cellSize);
@@ -34,7 +38,7 @@ namespace Pathfinder.Graph
         {
             var neighbors = new List<INode<TCoordinateType>>();
 
-            for (var i = 0; i < CoordNodes.GetLength(0); i++)
+            Parallel.For(0, CoordNodes.GetLength(0), parallelOptions, i =>
             {
                 for (var j = 0; j < CoordNodes.GetLength(1); j++)
                 {
@@ -47,7 +51,8 @@ namespace Pathfinder.Graph
 
                             var isNeighbor =
                                 (Approximately(CoordNodes[i, j].GetX(), CoordNodes[k, l].GetX()) &&
-                                 Approximately(Math.Abs(CoordNodes[i, j].GetY() - CoordNodes[k, l].GetY()), cellSize)) ||
+                                 Approximately(Math.Abs(CoordNodes[i, j].GetY() - CoordNodes[k, l].GetY()),
+                                     cellSize)) ||
                                 (Approximately(CoordNodes[i, j].GetY(), CoordNodes[k, l].GetY()) &&
                                  Approximately(Math.Abs(CoordNodes[i, j].GetX() - CoordNodes[k, l].GetX()), cellSize));
 
@@ -57,7 +62,7 @@ namespace Pathfinder.Graph
 
                     NodesType[i, j].SetNeighbors(new List<INode<TCoordinateType>>(neighbors));
                 }
-            }
+            });
         }
 
         public bool Approximately(float a, float b)

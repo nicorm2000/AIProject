@@ -1,8 +1,6 @@
 ﻿using System;
-using Pathfinder;
 using StateMachine.Agents.Simulation;
 using States;
-using UnityEngine;
 
 namespace StateMachine.States.SimStates
 {
@@ -10,13 +8,23 @@ namespace StateMachine.States.SimStates
     {
         public override BehaviourActions GetTickBehaviour(params object[] parameters)
         {
+            if (parameters == null || parameters.Length < 9)
+            {
+                return default;
+            }
+            
             var behaviours = new BehaviourActions();
 
-            var onAttack = parameters[0] as Action;
-            var outputBrain1 = (float[])parameters[1];
-            var outputBrain2 = (float[])parameters[2];
-            var outputBrain3 = (float)parameters[3];
+            var onAttack = parameters[5] as Action;
+            var outputBrain1 = (float[])parameters[6];
+            var outputBrain2 = (float[])parameters[7];
+            var outputBrain3 = (float)parameters[8];
 
+            if (outputBrain1 == null || outputBrain2 == null)
+            {
+                return default;
+            }
+            
             behaviours.AddMultiThreadableBehaviours(0, () =>
             {
                 onAttack?.Invoke();

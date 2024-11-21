@@ -84,6 +84,8 @@ namespace StateMachine
 
             _transitions[_currentState, Convert.ToInt32(flag)].onTransition?.Invoke();
 
+            var currentState = _transitions[_currentState, Convert.ToInt32(flag)].destinationInState;
+            if(currentState == UNNASIGNED_TRANSITION) return;
             _currentState = _transitions[_currentState, Convert.ToInt32(flag)].destinationInState;
 
             ExecuteBehaviour(GetCurrentStateOnEnterBehaviours);
@@ -175,7 +177,7 @@ namespace StateMachine
             if (behaviourActions.MultiThreadablesBehaviour == null) return;
             if (!behaviourActions.MultiThreadablesBehaviour.ContainsKey(executionOrder)) return;
 
-            Parallel.ForEach(behaviourActions.MultiThreadablesBehaviour, behaviour =>
+            Parallel.ForEach(behaviourActions.MultiThreadablesBehaviour, parallelOptions, behaviour =>
             {
                 foreach (Action action in behaviour.Value)
                 {

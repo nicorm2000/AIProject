@@ -24,6 +24,12 @@ namespace StateMachine.Agents.Simulation
             get => transform;
             set
             {
+                transform ??= new TTransform();
+                transform.position ??= new MyVector(0, 0);
+                value ??= new TTransform();
+                value.position ??= new MyVector(0, 0);
+                
+                transform.forward = (transform.position - value.position).Normalized();
                 transform = value;
                 boid.transform.position = value.position;
                 boid.transform.forward = (targetPosition - value.position).Normalized();
@@ -285,12 +291,10 @@ namespace StateMachine.Agents.Simulation
 
         public override void SetPosition(IVector position)
         {
-            base.SetPosition(position);
-            boid.transform.position = position;
-            boid.transform.forward = (targetPosition - position).Normalized();
+            Transform = (TTransform)new ITransform<IVector>(position);
         }
 
-        protected override INode<IVector> GetTarget(SimNodeType nodeType = SimNodeType.Empty)
+        public override INode<IVector> GetTarget(SimNodeType nodeType = SimNodeType.Empty)
         {
             INode<IVector> target = EcsPopulationManager.GetNearestNode(nodeType, Transform.position);
 

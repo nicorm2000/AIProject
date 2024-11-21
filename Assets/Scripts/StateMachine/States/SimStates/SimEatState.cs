@@ -19,6 +19,7 @@ namespace StateMachine.States.SimStates
 
             behaviours.AddMultiThreadableBehaviours(0, () =>
             {
+                if(foodTarget == null) return;
                 if (currentNode is not { Food: > 0 } || foodTarget != currentNode.NodeType) return;
 
                 onEat?.Invoke();
@@ -57,21 +58,32 @@ namespace StateMachine.States.SimStates
     {
         public override BehaviourActions GetTickBehaviour(params object[] parameters)
         {
+            if (parameters == null || parameters.Length < 3)
+            {
+                return default;
+            }
             var behaviours = new BehaviourActions();
             var currentPos = parameters[0] as IVector;
             var foodNode = parameters[1] as SimNode<IVector>;
             var onEat = parameters[2] as Action;
             var outputBrain1 = (float[])parameters[3];
-
+            
+           
+            
             IVector distanceToFood = new MyVector();
             IVector maxDistance = new MyVector(4, 4);
 
             behaviours.AddMultiThreadableBehaviours(0, () =>
             {
+                if (currentPos == null || foodNode == null || onEat == null || outputBrain1 == null)
+                {
+                    return;
+                }
                 distanceToFood = new MyVector(foodNode.GetCoordinate().X - currentPos.X,
                     foodNode.GetCoordinate().Y - currentPos.Y);
 
-                if (foodNode is not { Food: > 0 } || distanceToFood.Magnitude() > maxDistance.Magnitude()) return;
+                if (foodNode is not { Food: > 0 } || foodNode.NodeType != SimNodeType.Carrion ||
+                    distanceToFood.Magnitude() > maxDistance.Magnitude()) return;
 
                 onEat?.Invoke();
             });
