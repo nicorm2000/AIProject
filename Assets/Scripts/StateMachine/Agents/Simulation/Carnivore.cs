@@ -44,7 +44,7 @@ namespace StateMachine.Agents.Simulation
             HasKilled = false;
             DamageDealt = 0;
         }
-        
+
         public override void UpdateInputs()
         {
             target = EcsPopulationManager.GetNearestEntity(SimAgentTypes.Herbivore, Transform.position);
@@ -61,7 +61,7 @@ namespace StateMachine.Agents.Simulation
 
             input[brain][0] = CurrentNode.GetCoordinate().X;
             input[brain][1] = CurrentNode.GetCoordinate().Y;
-           
+
             if (target == null)
             {
                 input[brain][2] = NoTarget;
@@ -81,7 +81,7 @@ namespace StateMachine.Agents.Simulation
             input[brain] = new float[inputCount];
             input[brain][0] = CurrentNode.GetCoordinate().X;
             input[brain][1] = CurrentNode.GetCoordinate().Y;
-            
+
             INode<IVector> nodeTarget = GetTarget(foodTarget);
 
 
@@ -140,26 +140,22 @@ namespace StateMachine.Agents.Simulation
 
         private void Attack()
         {
-            if (target is not Herbivore<TVector, TTransform> herbivore ||
+            if (target is not Herbivore<IVector, ITransform<IVector>> herbivore ||
                 !Approximatly(herbivore.Transform.position, transform.position, 0.2f)) return;
-
-            lock (target)
+            
+            herbivore.Hp--;
+            HasAttacked = true;
+            DamageDealt++;
+            if (herbivore.Hp <= 0)
             {
-                
-                herbivore.Hp--;
-                HasAttacked = true;
-                DamageDealt++;
-                if (herbivore.Hp <= 0)
-                {
-                    HasKilled = true;
-                }
+                HasKilled = true;
             }
         }
 
         protected override void Eat()
         {
             INode<IVector> node = CurrentNode;
-            
+
             lock (node)
             {
                 if (node.Food <= 0) return;

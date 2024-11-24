@@ -70,6 +70,11 @@ namespace StateMachine.Agents.Simulation
                 EcsPopulationManager.flockingManager.Separation, EcsPopulationManager.flockingManager.Direction);
         }
 
+        public override void UpdateInputs()
+        {
+            boid.NearBoids = EcsPopulationManager.GetBoidsInsideRadius(boid);
+            base.UpdateInputs();
+        }
 
         protected override void MovementInputs()
         {
@@ -182,39 +187,39 @@ namespace StateMachine.Agents.Simulation
 
         private IVector GetAverageNeighborPosition()
         {
-            List<Boid<IVector, ITransform<IVector>>> nearBoids = EcsPopulationManager.GetBoidsInsideRadius(boid);
+            IVector averagePosition = new MyVector(0, 0);
+            int neighborCount = 0;
 
-            if (nearBoids.Count == 0)
+            foreach (var neighbor in boid.NearBoids)
             {
-                return MyVector.zero();
+                if (neighbor?.position == null) continue;
+                
+                averagePosition += neighbor.position;
+                neighborCount++;
             }
 
-            MyVector avg = MyVector.zero();
-            foreach (Boid<IVector, ITransform<IVector>> boid in nearBoids)
+            if (neighborCount > 0)
             {
-                avg += (MyVector)boid.transform.position;
+                averagePosition /= neighborCount;
             }
 
-            avg /= nearBoids.Count;
-            return avg;
+            return averagePosition;
         }
 
         private IVector GetAverageNeighborDirection()
         {
-            List<Boid<IVector, ITransform<IVector>>> nearBoids = EcsPopulationManager.GetBoidsInsideRadius(boid);
-
-            if (nearBoids.Count == 0)
+            if (boid.NearBoids.Count == 0)
             {
                 return MyVector.zero();
             }
 
             MyVector avg = MyVector.zero();
-            foreach (Boid<IVector, ITransform<IVector>> boid1 in nearBoids)
+            foreach (ITransform<IVector> boid1 in boid.NearBoids)
             {
-                avg += boid1.GetDirection().Normalized() - boid1.transform.position.Normalized();
+                avg += boid1.forward;
             }
 
-            avg /= nearBoids.Count;
+            avg /= boid.NearBoids.Count;
             return avg;
         }
 

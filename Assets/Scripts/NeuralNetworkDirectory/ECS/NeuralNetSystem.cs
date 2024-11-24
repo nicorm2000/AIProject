@@ -2,6 +2,7 @@
 using ECS.Patron;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using NeuralNetworkDirectory.NeuralNet;
 
 namespace NeuralNetworkDirectory.ECS
 {
@@ -47,19 +48,35 @@ namespace NeuralNetworkDirectory.ECS
                     float[] outputs = new float[3];
                     for (int j = 0; j < neuralNetwork.Layers[i].Count; j++)
                     {
-                        outputs = neuralNetwork.Layers[i][j].Synapsis(inputs[i], i);
+                        outputs = Synapsis(neuralNetwork.Layers[i][j], inputs[i]);
                         inputs[i] = outputs;
                     }
 
-                    if (neuralNetwork.Layers[i][^1].OutputsCount != outputs.Length) return;
+                    if ((int)neuralNetwork.Layers[i][^1].OutputsCount != outputs.Length) return;
 
-                    outputComponents[entityId].outputs[i] = outputs;
+                    outputComponents[entityId].Outputs[i] = outputs;
                 });
             });
         }
 
         protected override void PostExecute(float deltaTime)
         {
+        }
+
+        private float[] Synapsis(NeuronLayer layer, float[] inputs)
+        {
+            float[] outputs = new float[(int)layer.NeuronsCount];
+            Parallel.For(0, (int)layer.NeuronsCount, parallelOptions, j =>
+            {
+                float a = 0;
+                for (int i = 0; i < inputs.Length; i++)
+                {
+                    a += layer.neurons[j].weights[i] * inputs[i];
+                }
+                a += layer.neurons[j].bias;
+                outputs[j] = (float)Math.Tanh(a);
+            });
+            return outputs;
         }
     }
 }

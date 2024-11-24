@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using FlappyIa.GeneticAlg;
 using NeuralNetworkDirectory.ECS;
+using NeuralNetworkDirectory.GeneticAlg;
 using NeuralNetworkDirectory.NeuralNet;
 using Pathfinder;
 using StateMachine.States.SimStates;
@@ -75,12 +75,6 @@ namespace StateMachine.Agents.Simulation
         protected Action OnEat;
         protected float dt;
         protected const int NoTarget = -1;
-
-        protected SimNode<TVector> TargetNode
-        {
-            get => targetNode;
-            set => targetNode = value;
-        }
 
         private SimNode<TVector> targetNode;
         Genome[] genomes;
