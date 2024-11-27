@@ -262,12 +262,12 @@ MonoBehaviour:
   Bias: 0.5
   generationsPerSave: 100
   generationDuration: 20
-  activateSave: 0
-  activateLoad: 0
+  activateSave: 1
+  activateLoad: 1
   generationToLoad: 2000
+  speed: 150
   gridWidth: 50
   gridHeight: 50
-  speed: 150
 --- !u!4 &1659154293
 Transform:
   m_ObjectHideFlags: 0
