@@ -68,6 +68,9 @@ namespace NeuralNetworkDirectory
         private static Dictionary<uint, Dictionary<BrainType, List<Genome>>> _population = new();
         private static readonly int BrainsAmount = Enum.GetValues(typeof(BrainType)).Length;
 
+        /// <summary>
+        /// Defines parallel options for managing the degree of parallelism in the graph's operations.
+        /// </summary>
         private ParallelOptions parallelOptions = new()
         {
             MaxDegreeOfParallelism = 32
@@ -75,6 +78,10 @@ namespace NeuralNetworkDirectory
 
         #endregion
 
+        /// <summary>
+        /// Initializes the simulation by setting up various data containers, input counts, brain types, and other components necessary for the simulation. 
+        /// Also subscribes to the <see cref="Herbivore{IVector, ITransform{IVector}}.OnDeath"/> event and initializes the graph and other managers.
+        /// </summary>
         private void Awake()
         {
             Herbivore<IVector, ITransform<IVector>>.OnDeath += RemoveEntity;
@@ -157,6 +164,10 @@ namespace NeuralNetworkDirectory
             behaviourCount = GetHighestBehaviourCount();
         }
 
+        /// <summary>
+        /// Updates the simulation by calculating the positions of the agents (carnivores, herbivores, and scavengers) in parallel, 
+        /// and then drawing their mesh instances on the screen.
+        /// </summary>
         private void Update()
         {
             Matrix4x4[] carnivoreMatrices = new Matrix4x4[carnivoreCount];
@@ -220,6 +231,10 @@ namespace NeuralNetworkDirectory
             }
         }
 
+        /// <summary>
+        /// Handles the fixed time step update for the simulation. It controls agent movement, performs actions for each entity turn, 
+        /// and triggers a new epoch when the specified generation duration is reached.
+        /// </summary>
         private void FixedUpdate()
         {
             if (!isRunning)
@@ -238,6 +253,13 @@ namespace NeuralNetworkDirectory
             }
         }
 
+        /// <summary>
+        /// Updates the state of all agents in the simulation during their turn. 
+        /// This method processes agent inputs, updates their state in parallel, 
+        /// and manages the behaviors of different agent types (e.g., scavenger) 
+        /// by adjusting their boid offsets and updating their finite state machine (FSM).
+        /// </summary>
+        /// <param name="dt">The delta time since the last update, used for time-based calculations.</param>
         private void EntitiesTurn(float dt)
         {
             KeyValuePair<uint, SimAgentType>[] agentsCopy = DataContainer.Agents.ToArray();
@@ -310,6 +332,13 @@ namespace NeuralNetworkDirectory
             fitnessManager.Tick();
         }
 
+        /// <summary>
+        /// Handles the simulation epoch by updating the population of agents, 
+        /// managing the lifecycle of agents (e.g., loading new agents if required), 
+        /// and generating new genomes for the next generation. 
+        /// The epoch includes population cleanup, initialization of new plants, 
+        /// and garbage collection after every 100 generations.
+        /// </summary>
         private void Epoch()
         {
             Generation++;
@@ -414,6 +443,13 @@ namespace NeuralNetworkDirectory
             GC.WaitForPendingFinalizers();
         }
 
+        /// <summary>
+        /// Updates the boid (flocking behavior) offsets for a scavenger agent, 
+        /// including its cohesion, separation, direction, and alignment behavior offsets.
+        /// This is based on the output data provided by the agent's neural network.
+        /// </summary>
+        /// <param name="boid">The boid object representing the scavenger agent's flocking behavior.</param>
+        /// <param name="outputs">The output values from the agent's neural network, used to update the boid's behavior offsets.</param>
         private void UpdateBoidOffsets(SimBoid boid, float[] outputs)
         {
             boid.cohesionOffset = outputs[0];
@@ -422,7 +458,11 @@ namespace NeuralNetworkDirectory
             boid.alignmentOffset = outputs[3];
         }
 
-
+        /// <summary>
+        /// Initializes the population by destroying existing agents and creating new ones 
+        /// for each agent type (herbivores, carnivores, and scavengers) based on 
+        /// predefined counts for each type.
+        /// </summary>
         private void GenerateInitialPopulation()
         {
             DestroyAgents();
@@ -434,6 +474,14 @@ namespace NeuralNetworkDirectory
             accumTime = 0.0f;
         }
 
+        /// <summary>
+        /// Creates a specified number of agents of a given type (Carnivore, Herbivore, or Scavenger).
+        /// Initializes the agents by setting up neural networks, components, and random positions. 
+        /// This process includes adding brain components, assigning neural network inputs and outputs, 
+        /// and generating genomes for the agents based on their type.
+        /// </summary>
+        /// <param name="count">The number of agents to create.</param>
+        /// <param name="agentType">The type of agent to create (Carnivore, Herbivore, or Scavenger).</param>
         private void CreateAgents(int count, SimAgentTypes agentType)
         {
             Parallel.For(0, count, i =>
@@ -528,6 +576,14 @@ namespace NeuralNetworkDirectory
             });
         }
 
+        /// <summary>
+        /// Creates an agent of the specified type and initializes its position and brain components. 
+        /// The agent's brain type is assigned based on its type (Carnivore, Herbivore, or Scavenger), 
+        /// and it is positioned randomly in the simulation grid. 
+        /// This method also initializes the agent's specific behaviors, including flocking for scavengers.
+        /// </summary>
+        /// <param name="agentType">The type of agent to create (Carnivore, Herbivore, or Scavenger).</param>
+        /// <returns>A fully initialized agent of the specified type.</returns>
         private SimAgentType CreateAgent(SimAgentTypes agentType)
         {
             INode<IVector> randomNode = agentType switch
@@ -575,7 +631,13 @@ namespace NeuralNetworkDirectory
             return agent;
         }
 
-
+        /// <summary>
+        /// Creates the brain components for an agent based on its type. 
+        /// Each agent type (Carnivore, Herbivore, or Scavenger) has a specific set of brain types and layers, 
+        /// which are created and added to the agent's neural network.
+        /// </summary>
+        /// <param name="agentType">The type of agent to create brains for (Carnivore, Herbivore, or Scavenger).</param>
+        /// <returns>A list of neural network components representing the agent's brain.</returns>
         private List<NeuralNetComponent> CreateBrain(SimAgentTypes agentType)
         {
             List<NeuralNetComponent> brains = new List<NeuralNetComponent>
@@ -604,7 +666,14 @@ namespace NeuralNetworkDirectory
             return brains;
         }
 
-        // TODO - Refactor this method
+        /// <summary>
+        /// Creates a single brain component for the agent with a specified brain type and agent type. 
+        /// This brain consists of a single layer with neurons and their corresponding properties, 
+        /// such as activation function and bias. 
+        /// </summary>
+        /// <param name="brainType">The type of brain to create (e.g., Eat, Movement, Attack, etc.).</param>
+        /// <param name="agentType">The type of agent this brain is associated with (Carnivore, Herbivore, or Scavenger).</param>
+        /// <returns>A neural network component for the specified brain type and agent type.</returns>
         private NeuralNetComponent CreateSingleBrain(BrainType brainType, SimAgentTypes agentType)
         {
             NeuralNetComponent neuralNetComponent = new NeuralNetComponent();
@@ -612,7 +681,14 @@ namespace NeuralNetworkDirectory
             return neuralNetComponent;
         }
 
-
+        /// <summary>
+        /// Creates a list of neuron layers for the specified brain type and agent type. 
+        /// This method sets up the structure of the neural network by adding input, hidden, and output layers, 
+        /// with the number of neurons determined by the agent's input count and brain type.
+        /// </summary>
+        /// <param name="brainType">The type of brain (e.g., Eat, Movement, etc.).</param>
+        /// <param name="agentType">The type of agent (Carnivore, Herbivore, or Scavenger).</param>
+        /// <returns>A list of neuron layers representing the neural network for the specified brain type and agent type.</returns>
         private List<NeuronLayer> CreateNeuronLayerList(BrainType brainType, SimAgentTypes agentType)
         {
             if (!DataContainer.InputCountCache.TryGetValue((brainType, agentType), out NeuronInputCount inputCount))
@@ -638,12 +714,26 @@ namespace NeuralNetworkDirectory
             return layers;
         }
 
+        /// <summary>
+        /// Clears the population of agents, effectively destroying all existing agents 
+        /// in the current simulation state. This method is used to reset or clean up 
+        /// the population data during specific simulation epochs or events.
+        /// </summary>
         private void DestroyAgents()
         {
             _population.Clear();
         }
 
-
+        /// <summary>
+        /// Handles the processing of brains for different agent types (Carnivores, Herbivores, Scavengers).
+        /// Updates the neural network components of agents by selecting a random genome and setting their weights.
+        /// Resets the agent's position and state after updating their neural network.
+        /// </summary>
+        /// <param name="indexes">A dictionary containing the index information for each agent type and brain type.</param>
+        /// <param name="genomes">A dictionary containing the genomes for each agent type and brain type.</param>
+        /// <param name="remainingCarn">A boolean indicating if there are remaining carnivores to process.</param>
+        /// <param name="remainingScav">A boolean indicating if there are remaining scavengers to process.</param>
+        /// <param name="remainingHerb">A boolean indicating if there are remaining herbivores to process.</param>
         private void BrainsHandler(Dictionary<SimAgentTypes, Dictionary<BrainType, int>> indexes,
             Dictionary<SimAgentTypes, Dictionary<BrainType, List<Genome>>> genomes,
             bool remainingCarn, bool remainingScav, bool remainingHerb)
@@ -706,7 +796,10 @@ namespace NeuralNetworkDirectory
             }
         }
 
-
+        /// <summary>
+        /// Fills the population of agents by creating missing Herbivores, Carnivores, and Scavengers.
+        /// Calls the CreateAgents method for each agent type to ensure the population is complete.
+        /// </summary>
         private void FillPopulation()
         {
             CreateAgents(missingHerbivores, SimAgentTypes.Herbivore);
@@ -714,6 +807,14 @@ namespace NeuralNetworkDirectory
             CreateAgents(missingScavengers, SimAgentTypes.Scavenger);
         }
 
+        /// <summary>
+        /// Creates new genomes for each brain type and agent type using a genetic algorithm.
+        /// The new genomes are added to the genomes dictionary for the specified agent type and brain type.
+        /// </summary>
+        /// <param name="genomes">A dictionary containing the genomes for each agent type and brain type.</param>
+        /// <param name="brainTypes">A dictionary containing the brain types for each agent type.</param>
+        /// <param name="agentType">The type of agent (Carnivore, Herbivore, or Scavenger).</param>
+        /// <param name="count">The number of new genomes to create for each brain type and agent type.</param>
         private void CreateNewGenomes(Dictionary<SimAgentTypes, Dictionary<BrainType, List<Genome>>> genomes,
             Dictionary<int, BrainType> brainTypes, SimAgentTypes agentType, int count)
         {
@@ -724,6 +825,13 @@ namespace NeuralNetworkDirectory
             }
         }
 
+        /// <summary>
+        /// Retrieves a list of genomes for a specified agent type and brain type.
+        /// The genomes are created by collecting the weights of neural network layers for each agent of the specified type and brain.
+        /// </summary>
+        /// <param name="agentType">The type of agent (Carnivore, Herbivore, or Scavenger).</param>
+        /// <param name="brainType">The brain type for which to retrieve the genomes.</param>
+        /// <returns>A list of genomes containing the weights of the neural network layers for the specified agent type and brain type.</returns>
         private List<Genome> GetGenomesByBrainAndAgentType(SimAgentTypes agentType, BrainType brainType)
         {
             List<Genome> genomes = new List<Genome>();
@@ -759,6 +867,9 @@ namespace NeuralNetworkDirectory
             return genomes;
         }
 
+        /// <summary>
+        /// Initializes plant positions in the grid, setting them as bushes with a food value of 5.
+        /// </summary>
         private void InitializePlants()
         {
             for (int i = 0; i < plantCount; i++)
@@ -769,6 +880,9 @@ namespace NeuralNetworkDirectory
             }
         }
 
+        /// <summary>
+        /// Cleans the map by resetting all nodes to empty and setting their food value to 0.
+        /// </summary>
         private void CleanMap()
         {
             foreach (SimNode<IVector> node in DataContainer.graph.NodesType)
@@ -778,6 +892,11 @@ namespace NeuralNetworkDirectory
             }
         }
 
+        /// <summary>
+        /// Saves the current agent neural network data to a specified directory for a given generation.
+        /// </summary>
+        /// <param name="directoryPath">The directory where the data will be saved.</param>
+        /// <param name="generation">The current generation number for the data.</param>
         private void Save(string directoryPath, int generation)
         {
             List<AgentNeuronData> agentsData = new List<AgentNeuronData>();
@@ -813,6 +932,11 @@ namespace NeuralNetworkDirectory
             NeuronDataSystem.SaveNeurons(agentsData, directoryPath, generation);
         }
 
+        /// <summary>
+        /// Saves the current agent neural network data to a specified directory for a given generation.
+        /// </summary>
+        /// <param name="directoryPath">The directory where the data will be saved.</param>
+        /// <param name="generation">The current generation number for the data.</param>
         public void Load(SimAgentTypes agentType)
         {
             Dictionary<SimAgentTypes, Dictionary<BrainType, List<AgentNeuronData>>> loadedData =
@@ -854,6 +978,10 @@ namespace NeuralNetworkDirectory
             }
         }
 
+        /// <summary>
+        /// Loads the neural network data for agents from a specified directory, optionally loading data for a specific generation.
+        /// </summary>
+        /// <param name="directoryPath">The path to the directory where the data is located.</param>
         public void Load(string directoryPath)
         {
             Dictionary<SimAgentTypes, Dictionary<BrainType, List<AgentNeuronData>>> loadedData = generationToLoad > 0 ?
@@ -900,6 +1028,9 @@ namespace NeuralNetworkDirectory
             }
         }
 
+        /// <summary>
+        /// Starts the simulation, initializing agents, setting up the genetic algorithm, and loading initial data.
+        /// </summary>
         private void StartSimulation()
         {
             DataContainer.Agents = new Dictionary<uint, SimAgentType>();
@@ -910,6 +1041,9 @@ namespace NeuralNetworkDirectory
             isRunning = true;
         }
 
+        /// <summary>
+        /// Stops the simulation by halting agent activity and resetting the generation count.
+        /// </summary>
         public void StopSimulation()
         {
             isRunning = false;
@@ -917,11 +1051,18 @@ namespace NeuralNetworkDirectory
             DestroyAgents();
         }
 
+        /// <summary>
+        /// Pauses or resumes the simulation by toggling the running state.
+        /// </summary>
         public void PauseSimulation()
         {
             isRunning = !isRunning;
         }
 
+        /// <summary>
+        /// Determines the highest count of behaviors across all agents, considering both multi-threaded and main-thread behaviors.
+        /// </summary>
+        /// <returns>The highest behavior count across all agents.</returns>
         private int GetHighestBehaviourCount()
         {
             int highestCount = 0;
@@ -941,6 +1082,14 @@ namespace NeuralNetworkDirectory
             return highestCount;
         }
 
+        /// <summary>
+        /// Retrieves the key for a brain type by its associated value for a specific agent type.
+        /// </summary>
+        /// <param name="value">The brain type value to search for.</param>
+        /// <param name="agentType">The agent type to search within.</param>
+        /// <returns>The key corresponding to the specified brain type value.</returns>
+        /// <exception cref="ArgumentException">Thrown if the agent type is invalid.</exception>
+        /// <exception cref="KeyNotFoundException">Thrown if the brain type is not found.</exception>
         public static int GetBrainTypeKeyByValue(BrainType value, SimAgentTypes agentType)
         {
             Dictionary<int, BrainType> brainTypes = agentType switch
@@ -963,11 +1112,13 @@ namespace NeuralNetworkDirectory
                 $"The value '{value}' is not present in the brainTypes dictionary for agent type '{agentType}'.");
         }
 
+        /// <summary>
+        /// Draws Gizmos for visualizing nodes in the simulation, with colors corresponding to node types.
+        /// </summary>
         private void OnDrawGizmos()
         {
             if (!Application.isPlaying)
                 return;
-
 
             foreach (SimNode<IVector> node in DataContainer.graph.NodesType)
             {
@@ -986,6 +1137,9 @@ namespace NeuralNetworkDirectory
             }
         }
 
+        /// <summary>
+        /// Purges agents based on specific conditions, such as health or the ability to reproduce, marking them for removal.
+        /// </summary>
         private void PurgingSpecials()
         {
             List<uint> agentsToRemove = new List<uint>();
@@ -1019,6 +1173,10 @@ namespace NeuralNetworkDirectory
             agentsToRemove.Clear();
         }
 
+        /// <summary>
+        /// Removes an agent from the simulation, cleaning up all associated data and references.
+        /// </summary>
+        /// <param name="simAgent">The agent to remove.</param>
         public static void RemoveEntity(SimAgentType simAgent)
         {
             simAgent.Uninit();
@@ -1029,6 +1187,11 @@ namespace NeuralNetworkDirectory
             ECSManager.RemoveEntity(agentId);
         }
 
+        /// <summary>
+        /// Sets the weights for the neurons in a list of layers based on the provided weight array.
+        /// </summary>
+        /// <param name="layers">The list of neuron layers to update.</param>
+        /// <param name="newWeights">The new weight values to assign to the neurons.</param>
         public static void SetWeights(List<NeuronLayer> layers, float[] newWeights)
         {
             if (newWeights == null || newWeights.Length == 0)
@@ -1055,6 +1218,11 @@ namespace NeuralNetworkDirectory
             }
         }
 
+        /// <summary>
+        /// Retrieves the weights from the neurons of a given layer.
+        /// </summary>
+        /// <param name="layer">The neuron layer to extract weights from.</param>
+        /// <returns>An array of the weights from the neurons in the layer.</returns>
         public static float[] GetWeights(NeuronLayer layer)
         {
             int totalWeights = (int)(layer.NeuronsCount * layer.InputsCount);
