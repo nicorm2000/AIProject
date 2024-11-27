@@ -45,6 +45,8 @@ namespace NeuralNetworkDirectory
         [SerializeField] private float Bias = 0.0f;
         [SerializeField] private int generationsPerSave = 25;
         [SerializeField] private float generationDuration = 20.0f;
+        [SerializeField] private bool activateSave;
+        [SerializeField] private bool activateLoad;
         [SerializeField] private int generationToLoad = 0;
 
         public int gridWidth = 10;
@@ -84,6 +86,7 @@ namespace NeuralNetworkDirectory
         /// </summary>
         private void Awake()
         {
+            NeuronDataSystem.OnSpecificLoaded += SpecificLoaded;
             Herbivore<IVector, ITransform<IVector>>.OnDeath += RemoveEntity;
             DataContainer.herbBrainTypes = new Dictionary<int, BrainType>();
             DataContainer.scavBrainTypes = new Dictionary<int, BrainType>();
@@ -899,6 +902,8 @@ namespace NeuralNetworkDirectory
         /// <param name="generation">The current generation number for the data.</param>
         private void Save(string directoryPath, int generation)
         {
+            if (!activateSave) return;
+
             List<AgentNeuronData> agentsData = new List<AgentNeuronData>();
 
             if (DataContainer.Agents.Count == 0) return;
@@ -939,6 +944,8 @@ namespace NeuralNetworkDirectory
         /// <param name="generation">The current generation number for the data.</param>
         public void Load(SimAgentTypes agentType)
         {
+            if (!activateLoad) return;
+
             Dictionary<SimAgentTypes, Dictionary<BrainType, List<AgentNeuronData>>> loadedData =
                 NeuronDataSystem.LoadLatestNeurons(DirectoryPath);
 
@@ -984,9 +991,11 @@ namespace NeuralNetworkDirectory
         /// <param name="directoryPath">The path to the directory where the data is located.</param>
         public void Load(string directoryPath)
         {
-            Dictionary<SimAgentTypes, Dictionary<BrainType, List<AgentNeuronData>>> loadedData = generationToLoad > 0 ?
-                NeuronDataSystem.LoadSpecificNeurons(directoryPath, generationToLoad) :
-                NeuronDataSystem.LoadLatestNeurons(directoryPath);
+            if (!activateLoad) return;
+            Dictionary<SimAgentTypes, Dictionary<BrainType, List<AgentNeuronData>>> loadedData =
+                generationToLoad > 0
+                    ? NeuronDataSystem.LoadSpecificNeurons(directoryPath, generationToLoad)
+                    : NeuronDataSystem.LoadLatestNeurons(directoryPath);
 
             if (loadedData.Count == 0) return;
             System.Random random = new System.Random();
@@ -1025,6 +1034,23 @@ namespace NeuralNetworkDirectory
                             .Remove(loadedData[agent.agentType][brainType.Value][index]);
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// Logs a message indicating whether a specific generation was loaded correctly or not.
+        /// </summary>
+        /// <param name="obj">A boolean value indicating the success of loading the generation. 
+        /// If true, a success message is logged; otherwise, a warning message is logged.</param>
+        private void SpecificLoaded(bool obj)
+        {
+            if (obj)
+            {
+                Debug.Log("Specific generation loaded correctly.");
+            }
+            else
+            {
+                Debug.LogWarning("Specific generation couldn't be loaded.");
             }
         }
 
