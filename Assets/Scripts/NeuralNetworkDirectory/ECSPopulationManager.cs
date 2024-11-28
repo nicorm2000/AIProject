@@ -329,7 +329,6 @@ namespace NeuralNetworkDirectory
                 [SimAgentTypes.Carnivore] = new Dictionary<BrainType, int>()
             };
 
-
             foreach (SimAgentType agent in DataContainer.Agents.Values) agent.Reset();
 
             if (remainingCarn)
@@ -346,11 +345,6 @@ namespace NeuralNetworkDirectory
 
             genomes.Clear();
             indexes.Clear();
-
-            if (Generation % 100 != 0) return;
-
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
 
             if (Generation % 100 == 0)
             {
