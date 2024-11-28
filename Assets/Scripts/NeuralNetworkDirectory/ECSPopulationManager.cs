@@ -49,8 +49,8 @@ namespace NeuralNetworkDirectory
         [SerializeField][Range(1, 180)] private float generationDuration = 20.0f;
         [SerializeField][Range(1, 1500)] private float speed = 1.0f;
 
-        public int gridWidth = 10;
-        public int gridHeight = 10;
+        [Range(1, 100)] public int gridWidth = 10;
+        [Range(1, 100)] public int gridHeight = 10;
 
         private bool isRunning = true;
         private int missingCarnivores;
@@ -249,7 +249,6 @@ namespace NeuralNetworkDirectory
                     entity.Value.Fsm.MainThreadTick(i);
                 }
 
-                
                 Task.WaitAll(tasks.ToArray());
 
                 foreach (Task task in tasks)
