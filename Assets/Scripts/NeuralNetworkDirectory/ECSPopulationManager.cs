@@ -1057,7 +1057,7 @@ namespace NeuralNetworkDirectory
         {
             if (!Application.isPlaying)
                 return;
-
+        
             foreach (SimNode<IVector> node in DataContainer.graph.NodesType)
             {
                 Gizmos.color = node.NodeType switch
@@ -1069,7 +1069,7 @@ namespace NeuralNetworkDirectory
                     SimNodeType.Empty => Color.white,
                     _ => Color.white
                 };
-
+        
                 Gizmos.DrawSphere(new Vector3(node.GetCoordinate().X, node.GetCoordinate().Y), (float)CellSize / 5);
                 Gizmos.DrawSphere(new Vector3(node.GetCoordinate().X, node.GetCoordinate().Y), (float)CellSize / 5);
             }
